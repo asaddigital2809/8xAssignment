@@ -1,9 +1,23 @@
 import Link from "next/link";
 import { AuthCard } from "@/components/forms";
-import { ResetPasswordForm } from "../AuthForms";
+import { devOtpCode } from "@/server/devOtp";
+import { ResetPasswordForm, ResetWithCodeForm, TestModeNotice } from "../AuthForms";
 
 export default async function ResetPasswordPage({ searchParams }: PageProps<"/reset-password">) {
-  const { token } = await searchParams;
+  const { token, email } = await searchParams;
+  const testCode = devOtpCode();
+
+  if (testCode) {
+    return (
+      <AuthCard title="Choose a new password">
+        <div className="space-y-3">
+          <TestModeNotice code={testCode} />
+          <ResetWithCodeForm email={typeof email === "string" ? email : undefined} />
+        </div>
+      </AuthCard>
+    );
+  }
+
   return (
     <AuthCard title="Choose a new password">
       {typeof token === "string" && token ? (

@@ -4,6 +4,7 @@ import { db } from "@/db/client";
 import { emailTokens, users } from "@/db/schema";
 import { normalizeEmail, type Role } from "@/domain/auth";
 import { getAppOrigin } from "./appUrl";
+import { devOtpEnabled, matchesDevOtp } from "./devOtp";
 import { activationEmail, alreadyRegisteredEmail, passwordResetEmail, sendMail } from "./mailer";
 import { getDummyHash, hashPassword, verifyPassword } from "./password";
 import { generateToken, hashToken } from "./tokens";
@@ -58,12 +59,15 @@ async function findUserByEmail(email: string) {
   return user;
 }
 
+// In fixed-OTP test mode (see devOtp.ts) nothing is emailed: the user enters the code instead.
 async function sendActivation(userId: string, email: string) {
+  if (devOtpEnabled()) return;
   const token = await issueToken(userId, "activate", ACTIVATION_TTL_MS);
   await sendMail(activationEmail(email, `${await getAppOrigin()}/verify-email?token=${token}`));
 }
 
 async function sendReset(userId: string, email: string) {
+  if (devOtpEnabled()) return;
   const token = await issueToken(userId, "reset", RESET_TTL_MS);
   await sendMail(passwordResetEmail(email, `${await getAppOrigin()}/reset-password?token=${token}`));
 }
@@ -82,7 +86,7 @@ export async function register(input: { name: string; email: string; password: s
 
   if (existing) {
     if (existing.emailVerified) {
-      await sendMail(alreadyRegisteredEmail(email, `${await getAppOrigin()}/forgot-password`));
+      if (!devOtpEnabled()) await sendMail(alreadyRegisteredEmail(email, `${await getAppOrigin()}/forgot-password`));
     } else {
       await sendActivation(existing.id, email);
     }
@@ -128,6 +132,11 @@ export async function requestPasswordReset(rawEmail: string): Promise<void> {
 export async function resetPassword(token: string, newPassword: string): Promise<boolean> {
   const userId = await consumeToken(token, "reset");
   if (!userId) return false;
+  await setNewPassword(userId, newPassword);
+  return true;
+}
+
+async function setNewPassword(userId: string, newPassword: string): Promise<void> {
   await db
     .update(users)
     .set({
@@ -136,6 +145,25 @@ export async function resetPassword(token: string, newPassword: string): Promise
       emailVerified: sql`coalesce(${users.emailVerified}, now())`,
     })
     .where(eq(users.id, userId));
+}
+
+// --- Fixed-OTP test mode (DEV_FIXED_OTP). Same outcomes as the link flows above. ---
+
+/** Activates an unverified account with the test code. False for a wrong code or unknown/active account. */
+export async function activateWithCode(rawEmail: string, code: string): Promise<boolean> {
+  if (!matchesDevOtp(code)) return false;
+  const user = await findUserByEmail(normalizeEmail(rawEmail));
+  if (!user || user.emailVerified) return false;
+  await db.update(users).set({ emailVerified: new Date() }).where(eq(users.id, user.id));
+  return true;
+}
+
+/** Resets a password with the test code (and revokes older sessions, like the link flow). */
+export async function resetWithCode(rawEmail: string, code: string, newPassword: string): Promise<boolean> {
+  if (!matchesDevOtp(code)) return false;
+  const user = await findUserByEmail(normalizeEmail(rawEmail));
+  if (!user) return false;
+  await setNewPassword(user.id, newPassword);
   return true;
 }
 

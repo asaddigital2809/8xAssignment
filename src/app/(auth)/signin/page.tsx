@@ -4,6 +4,7 @@ import { githubEnabled } from "@/auth";
 import { AuthCard, FormError, Notice } from "@/components/forms";
 import { safeRedirectPath } from "@/domain/auth";
 import { getCurrentUser } from "@/server/dal";
+import { devOtpEnabled } from "@/server/devOtp";
 import { githubSignInAction } from "../actions";
 import { SignInForm } from "../AuthForms";
 
@@ -26,7 +27,7 @@ export default async function SignInPage({ searchParams }: PageProps<"/signin">)
         {params.activated && <Notice>Your account is active. Sign in to continue.</Notice>}
         {params.reset && <Notice>Your password was changed. Sign in with the new one.</Notice>}
         {oauthError && <FormError message={OAUTH_ERRORS[oauthError] ?? "Sign-in failed. Please try again."} />}
-        <SignInForm callbackUrl={callbackUrl} />
+        <SignInForm callbackUrl={callbackUrl} testMode={devOtpEnabled()} />
         <Link href="/forgot-password" className="block text-sm text-blue-700 hover:underline">
           Forgot your password?
         </Link>

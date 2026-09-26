@@ -7,11 +7,14 @@ import { signIn, signOut } from "@/auth";
 import { PASSWORD_MAX, passwordProblem, safeRedirectPath } from "@/domain/auth";
 import {
   activateAccount,
+  activateWithCode,
   register,
   requestPasswordReset,
   resendActivation,
   resetPassword,
+  resetWithCode,
 } from "@/server/authService";
+import { devOtpEnabled } from "@/server/devOtp";
 
 export type FormState = {
   error?: string;
@@ -108,10 +111,39 @@ export async function registerAction(_prev: FormState, form: FormData): Promise<
   return safely(
     async () => {
       await register(parsed.data);
+      // Test mode: no email is sent; go straight to entering the code.
+      if (devOtpEnabled()) redirect(`/verify-email?email=${encodeURIComponent(parsed.data.email)}`);
       return { done: true, email: parsed.data.email };
     },
     { email: parsed.data.email },
   );
+}
+
+const code = z.string().trim().regex(/^\d{4,8}$/, "Enter the numeric code.");
+
+/** Test mode only: activate with the fixed code. */
+export async function activateWithCodeAction(_prev: FormState, form: FormData): Promise<FormState> {
+  const parsed = z.object({ email, code }).safeParse({ email: str(form, "email"), code: str(form, "code") });
+  if (!parsed.success) return { fieldErrors: fieldErrors(parsed.error), email: str(form, "email") };
+  return safely(async () => {
+    const ok = await activateWithCode(parsed.data.email, parsed.data.code);
+    if (!ok) return { error: "That code isn't right, or this account is already active.", email: parsed.data.email };
+    redirect("/signin?activated=1");
+  });
+}
+
+/** Test mode only: reset the password with the fixed code. */
+export async function resetWithCodeAction(_prev: FormState, form: FormData): Promise<FormState> {
+  const parsed = z
+    .object({ email, code, password, confirm: z.string() })
+    .refine((v) => v.password === v.confirm, { path: ["confirm"], message: "Passwords don't match." })
+    .safeParse({ email: str(form, "email"), code: str(form, "code"), password: str(form, "password"), confirm: str(form, "confirm") });
+  if (!parsed.success) return { fieldErrors: fieldErrors(parsed.error), email: str(form, "email") };
+  return safely(async () => {
+    const ok = await resetWithCode(parsed.data.email, parsed.data.code, parsed.data.password);
+    if (!ok) return { error: "That code isn't right for this email.", email: parsed.data.email };
+    redirect("/signin?reset=1");
+  });
 }
 
 export async function resendActivationAction(_prev: FormState, form: FormData): Promise<FormState> {
@@ -136,6 +168,7 @@ export async function forgotPasswordAction(_prev: FormState, form: FormData): Pr
   if (!parsed.success) return { fieldErrors: { email: parsed.error.issues[0].message } };
   return safely(async () => {
     await requestPasswordReset(parsed.data);
+    if (devOtpEnabled()) redirect(`/reset-password?email=${encodeURIComponent(parsed.data)}`);
     return { done: true, email: parsed.data };
   });
 }

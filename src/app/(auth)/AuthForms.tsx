@@ -5,6 +5,8 @@ import { useActionState } from "react";
 import { Field, FormError, Notice, SubmitButton } from "@/components/forms";
 import {
   activateAction,
+  activateWithCodeAction,
+  resetWithCodeAction,
   forgotPasswordAction,
   registerAction,
   resendActivationAction,
@@ -15,7 +17,7 @@ import {
 
 const initial: FormState = {};
 
-export function SignInForm({ callbackUrl }: { callbackUrl: string }) {
+export function SignInForm({ callbackUrl, testMode = false }: { callbackUrl: string; testMode?: boolean }) {
   const [state, action] = useActionState(signInAction, initial);
   const f = state.fieldErrors ?? {};
 
@@ -23,13 +25,15 @@ export function SignInForm({ callbackUrl }: { callbackUrl: string }) {
     <form action={action} noValidate className="space-y-3">
       <input type="hidden" name="callbackUrl" value={callbackUrl} />
       {state.error === "unverified" ? (
-        <FormError message="Your email isn't confirmed yet. Check your inbox for the activation link." />
+        <FormError
+          message={testMode ? "Your account isn't activated yet." : "Your email isn't confirmed yet. Check your inbox for the activation link."}
+        />
       ) : (
         <FormError message={state.error} />
       )}
       {state.error === "unverified" && (
         <Link href={`/verify-email?email=${encodeURIComponent(state.email ?? "")}`} className="block text-sm text-blue-700 hover:underline">
-          Resend activation email
+          {testMode ? "Enter your activation code" : "Resend activation email"}
         </Link>
       )}
       <Field label="Email" name="email" type="email" autoComplete="email" defaultValue={state.email} error={f.email} />
@@ -90,6 +94,43 @@ export function ResendActivationForm({ email }: { email?: string }) {
       <FormError message={state.error} />
       <Field label="Email" name="email" type="email" autoComplete="email" defaultValue={email} error={state.fieldErrors?.email} />
       <SubmitButton pendingLabel="Sending…">Resend activation email</SubmitButton>
+    </form>
+  );
+}
+
+/** Visible whenever the insecure fixed-code test mode is on. */
+export function TestModeNotice({ code }: { code: string }) {
+  return (
+    <p className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+      <strong>Test mode:</strong> email is turned off. Use the code <strong className="font-mono">{code}</strong>.
+    </p>
+  );
+}
+
+export function ActivateWithCodeForm({ email }: { email?: string }) {
+  const [state, action] = useActionState(activateWithCodeAction, initial);
+  const f = state.fieldErrors ?? {};
+  return (
+    <form action={action} noValidate className="space-y-3">
+      <FormError message={state.error} />
+      <Field label="Email" name="email" type="email" autoComplete="email" defaultValue={state.email ?? email} error={f.email} />
+      <Field label="Verification code" name="code" autoComplete="one-time-code" error={f.code} />
+      <SubmitButton pendingLabel="Verifying…">Activate my account</SubmitButton>
+    </form>
+  );
+}
+
+export function ResetWithCodeForm({ email }: { email?: string }) {
+  const [state, action] = useActionState(resetWithCodeAction, initial);
+  const f = state.fieldErrors ?? {};
+  return (
+    <form action={action} noValidate className="space-y-3">
+      <FormError message={state.error} />
+      <Field label="Email" name="email" type="email" autoComplete="email" defaultValue={state.email ?? email} error={f.email} />
+      <Field label="Verification code" name="code" autoComplete="one-time-code" error={f.code} />
+      <Field label="New password" name="password" type="password" autoComplete="new-password" error={f.password} />
+      <Field label="Confirm new password" name="confirm" type="password" autoComplete="new-password" error={f.confirm} />
+      <SubmitButton pendingLabel="Saving…">Set new password</SubmitButton>
     </form>
   );
 }
