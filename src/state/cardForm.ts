@@ -1,10 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import { validateCard, type CardErrors, type CardInput } from "@/domain/payment";
+import { detectBrand, digitsUpTo, formatCardNumber, validateCard, type CardErrors, type CardInput } from "@/domain/payment";
 
 type Fields = { number: string; expMonth: string; expYear: string; holderName: string };
 const EMPTY: Fields = { number: "", expMonth: "", expYear: "", holderName: "" };
+
+function normalize(field: keyof Fields, value: string): string {
+  switch (field) {
+    case "number":
+      return formatCardNumber(value);
+    case "expMonth":
+      return digitsUpTo(value, 2);
+    case "expYear":
+      return digitsUpTo(value, 4);
+    case "holderName":
+      return value.slice(0, 60);
+  }
+}
 
 /** Card entry form state. Same rules as the server (domain/payment), shown after the first submit. */
 export function useCardForm() {
@@ -22,7 +35,9 @@ export function useCardForm() {
   return {
     fields,
     errors,
-    setField: (field: keyof Fields, value: string) => setFields((f) => ({ ...f, [field]: value })),
+    /** Inputs are normalized as typed: grouped card digits, numeric month (2) and year (4). */
+    setField: (field: keyof Fields, value: string) => setFields((f) => ({ ...f, [field]: normalize(field, value) })),
+    brand: fields.number ? detectBrand(fields.number.replace(/\D/g, "")) : undefined,
     /** Marks submitted and returns the card only if it passes validation. */
     validate: (): CardInput | undefined => {
       setSubmitted(true);

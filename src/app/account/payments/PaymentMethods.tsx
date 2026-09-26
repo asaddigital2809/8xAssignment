@@ -89,7 +89,7 @@ function NewCard({ onDone, create }: { onDone: () => void; create: ReturnType<ty
   return (
     <form onSubmit={onSubmit} noValidate className="space-y-3 rounded bg-white p-4 shadow-sm">
       <h2 className="font-medium">New card</h2>
-      <CardFields fields={form.fields} errors={form.errors} onChange={form.setField} />
+      <CardFields fields={form.fields} errors={form.errors} brand={form.brand} onChange={form.setField} />
       <label className="flex items-center gap-2 text-sm">
         <input type="checkbox" checked={makeDefault} onChange={(e) => setMakeDefault(e.target.checked)} />
         Make this my default card

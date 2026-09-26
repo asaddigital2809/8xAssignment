@@ -1,6 +1,6 @@
 "use client";
 
-import { BRAND_LABEL, type CardErrors, type PaymentMethod } from "@/domain/payment";
+import { BRAND_LABEL, type CardBrand, type CardErrors, type PaymentMethod } from "@/domain/payment";
 
 type Fields = { number: string; expMonth: string; expYear: string; holderName: string };
 
@@ -8,22 +8,29 @@ type Fields = { number: string; expMonth: string; expYear: string; holderName: s
 export function CardFields({
   fields,
   errors,
+  brand,
   onChange,
 }: {
   fields: Fields;
   errors: CardErrors;
+  /** Detected from the digits typed so far. */
+  brand?: CardBrand;
   onChange: (field: keyof Fields, value: string) => void;
 }) {
   const input = "mt-1 block w-full rounded border border-gray-300 px-3 py-2 aria-[invalid=true]:border-red-500";
   return (
     <div className="grid gap-3 sm:grid-cols-4">
       <label className="text-sm sm:col-span-4">
-        Card number
+        <span className="flex justify-between">
+          Card number
+          {brand && brand !== "card" && <span className="text-xs font-medium text-gray-600">{BRAND_LABEL[brand]}</span>}
+        </span>
         <input
           name="cardNumber"
           inputMode="numeric"
           autoComplete="cc-number"
           placeholder="4242 4242 4242 4242"
+          maxLength={19}
           value={fields.number}
           onChange={(e) => onChange("number", e.target.value)}
           aria-invalid={Boolean(errors.number)}
@@ -38,6 +45,7 @@ export function CardFields({
           inputMode="numeric"
           autoComplete="cc-exp-month"
           placeholder="MM"
+          maxLength={2}
           value={fields.expMonth}
           onChange={(e) => onChange("expMonth", e.target.value)}
           aria-invalid={Boolean(errors.expMonth)}
@@ -52,6 +60,7 @@ export function CardFields({
           inputMode="numeric"
           autoComplete="cc-exp-year"
           placeholder="YYYY"
+          maxLength={4}
           value={fields.expYear}
           onChange={(e) => onChange("expYear", e.target.value)}
           aria-invalid={Boolean(errors.expYear)}

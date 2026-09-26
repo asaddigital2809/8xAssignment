@@ -231,7 +231,7 @@ function NewCardForm({ flow, onDone, canCancel }: { flow: Flow; onDone: () => vo
   return (
     <form onSubmit={onSubmit} noValidate className="space-y-3 rounded border border-dashed p-3">
       <p className="text-sm font-medium">New card</p>
-      <CardFields fields={form.fields} errors={form.errors} onChange={form.setField} />
+      <CardFields fields={form.fields} errors={form.errors} brand={form.brand} onChange={form.setField} />
       {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
       <div className="flex gap-3">
         <button disabled={saving} className="rounded-full bg-amber-400 px-5 py-2 text-sm font-medium hover:bg-amber-500 disabled:opacity-60">
