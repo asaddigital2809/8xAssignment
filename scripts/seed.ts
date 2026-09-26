@@ -1,6 +1,6 @@
 /**
  * Idempotent seed: safe to run repeatedly. Upserts the catalog snapshot in
- * src/data/catalog.json. Later steps extend this with users, orders, etc.
+ * src/data/catalog.json and the demo users. Later steps add orders, coupons, reviews.
  *
  *   npm run db:seed
  */
@@ -12,6 +12,14 @@ import { sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/neon-serverless";
 import catalog from "../src/data/catalog.json";
 import * as schema from "../src/db/schema";
+// server/* modules import "server-only"; the npm script runs tsx with
+// --conditions=react-server so that import resolves to its no-op build.
+import { hashPassword } from "../src/server/password";
+
+const DEMO_USERS = [
+  { name: "Admin User", email: "admin@amzn.clone", password: "Admin12345", role: "admin" },
+  { name: "Sam Shopper", email: "shopper@amzn.clone", password: "Shopper12345", role: "user" },
+] as const;
 
 async function main() {
   const url = process.env.DATABASE_URL;
@@ -45,7 +53,24 @@ async function main() {
       },
     });
 
+  // Demo accounts (documented in the README). Re-running the seed resets them.
+  for (const u of DEMO_USERS) {
+    const values = {
+      name: u.name,
+      email: u.email,
+      role: u.role,
+      passwordHash: await hashPassword(u.password),
+      emailVerified: new Date(),
+      passwordChangedAt: null,
+    };
+    await db
+      .insert(schema.users)
+      .values(values)
+      .onConflictDoUpdate({ target: schema.users.email, set: values });
+  }
+
   console.log(`Seeded ${catalog.categories.length} categories, ${catalog.products.length} products.`);
+  console.log(`Demo users: ${DEMO_USERS.map((u) => `${u.email} / ${u.password} (${u.role})`).join(", ")}`);
   await pool.end();
 }
 

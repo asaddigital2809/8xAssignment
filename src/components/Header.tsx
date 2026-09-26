@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import type { FormEvent, ReactNode } from "react";
 import { useCartCount, useCartHydrated } from "@/state/cartStore";
 
-export function Header() {
+/** `account` is a server-rendered slot (sign-in state), passed in from the layout. */
+export function Header({ account }: { account: ReactNode }) {
   const params = useSearchParams();
   return (
     <header className="bg-slate-900 text-white">
@@ -16,6 +17,7 @@ export function Header() {
         {/* Keyed on the query so the input resets when navigation changes the search. */}
         <SearchBar key={params.get("q") ?? ""} />
         <nav className="flex items-center gap-4 text-sm">
+          {account}
           <Link href="/orders" className="hover:underline">
             Orders
           </Link>
@@ -29,22 +31,24 @@ export function Header() {
 function SearchBar() {
   const router = useRouter();
   const params = useSearchParams();
-  const [text, setText] = useState(params.get("q") ?? "");
 
-  function onSubmit(e: FormEvent) {
+  function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    const text = String(new FormData(e.currentTarget).get("q") ?? "").trim();
     const next = new URLSearchParams();
-    if (text.trim()) next.set("q", text.trim());
+    if (text) next.set("q", text);
     const category = params.get("category");
     if (category) next.set("category", category);
     router.push(`/search?${next}`);
   }
 
   return (
-    <form onSubmit={onSubmit} role="search" className="order-last flex w-full sm:order-none sm:flex-1">
+    // Uncontrolled (read from FormData on submit), and action/name make it a plain GET
+    // form too, so searching works even before the page's JS has loaded.
+    <form action="/search" onSubmit={onSubmit} role="search" className="order-last flex w-full sm:order-none sm:flex-1">
       <input
-        value={text}
-        onChange={(e) => setText(e.target.value)}
+        name="q"
+        defaultValue={params.get("q") ?? ""}
         placeholder="Search products"
         aria-label="Search products"
         className="min-w-0 flex-1 rounded-l bg-white px-3 py-2 text-gray-900 outline-none"

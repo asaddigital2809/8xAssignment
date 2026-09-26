@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { Suspense } from "react";
+import { AccountNav } from "@/components/AccountNav";
 import { Header } from "@/components/Header";
 import { StoreHydrator } from "@/components/StoreHydrator";
 import "./globals.css";
@@ -22,7 +23,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <StoreHydrator />
         {/* Header reads search params, which requires a Suspense boundary. */}
         <Suspense fallback={<div className="h-14 bg-slate-900" />}>
-          <Header />
+          <Header account={<AccountNav />} />
         </Suspense>
         <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6">{children}</main>
       </body>
