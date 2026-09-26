@@ -4,9 +4,9 @@ import { useState } from "react";
 import { EMPTY_ADDRESS, isValid, validateAddress, type AddressErrors } from "@/domain/checkout";
 import type { Address } from "@/domain/types";
 
-/** Form state for the address; errors only show after the first submit attempt. */
-export function useAddressForm() {
-  const [address, setAddress] = useState<Address>(EMPTY_ADDRESS);
+/** Form state for an address (new or edited); errors only show after the first submit attempt. */
+export function useAddressForm(initial: Address = EMPTY_ADDRESS) {
+  const [address, setAddress] = useState<Address>(initial);
   const [submitted, setSubmitted] = useState(false);
 
   const errors: AddressErrors = submitted ? validateAddress(address) : {};
@@ -21,5 +21,10 @@ export function useAddressForm() {
     return isValid(validateAddress(address)) ? address : undefined;
   }
 
-  return { address, errors, setField, validate };
+  function reset(next: Address = EMPTY_ADDRESS) {
+    setAddress(next);
+    setSubmitted(false);
+  }
+
+  return { address, errors, setField, validate, reset };
 }

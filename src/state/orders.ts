@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { HttpError, UnauthorizedError } from "@/data/http";
-import { httpOrderRepository as orders } from "@/data/orderRepository";
-import type { Address, Order } from "@/domain/types";
+import { httpOrderRepository as orders, type CheckoutSelection } from "@/data/orderRepository";
+import type { Order } from "@/domain/types";
 import { useCartStore } from "./cartStore";
 import { redirectToSignIn } from "./navigation";
 import { useAsync } from "./useAsync";
@@ -30,10 +30,10 @@ export function usePlaceOrder() {
   const [idempotencyKey] = useState(() => crypto.randomUUID());
   const [state, setState] = useState<PlaceOrderState>({ status: "idle" });
 
-  async function submit(address: Address): Promise<Order | undefined> {
+  async function submit(selection: CheckoutSelection): Promise<Order | undefined> {
     setState({ status: "submitting" });
     try {
-      const pending = await orders.create(address, idempotencyKey);
+      const pending = await orders.create(selection, idempotencyKey);
       const paid = pending.status === "pending_payment" ? await payOrReconcile(pending.id) : pending;
       setState({ status: "placed", order: paid });
       void useCartStore.getState().load(); // server emptied the cart

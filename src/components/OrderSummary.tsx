@@ -2,6 +2,7 @@ import { ProductImage } from "@/components/ProductImage";
 import Link from "next/link";
 import { ORDER_STATUS_LABEL } from "@/domain/checkout";
 import { formatPrice } from "@/domain/money";
+import { BRAND_LABEL, type CardBrand } from "@/domain/payment";
 import type { Order, OrderStatus } from "@/domain/types";
 
 const STATUS_STYLE: Record<OrderStatus, string> = {
@@ -43,11 +44,33 @@ export function OrderSummary({ order, showAddress = false }: { order: Order; sho
         ))}
       </ul>
       {showAddress && (
-        <footer className="border-t px-4 py-3 text-sm text-gray-700">
-          <p className="font-medium">Shipping to</p>
-          <p>
-            {order.address.fullName}, {order.address.line1}, {order.address.city} {order.address.postalCode}, {order.address.country}
-          </p>
+        <footer className="grid gap-4 border-t px-4 py-3 text-sm text-gray-700 sm:grid-cols-3">
+          <div>
+            <p className="font-medium">Shipping to</p>
+            <p>
+              {order.address.fullName}, {order.address.line1}, {order.address.city} {order.address.postalCode}, {order.address.country}
+            </p>
+          </div>
+          <div>
+            <p className="font-medium">Payment</p>
+            <p>{order.payment ? `${BRAND_LABEL[order.payment.brand as CardBrand] ?? "Card"} •••• ${order.payment.last4}` : "—"}</p>
+          </div>
+          <dl>
+            <div className="flex justify-between">
+              <dt>Items</dt>
+              <dd>{formatPrice(order.subtotalCents)}</dd>
+            </div>
+            {order.discountCents > 0 && (
+              <div className="flex justify-between">
+                <dt>Discount{order.couponCode ? ` (${order.couponCode})` : ""}</dt>
+                <dd>−{formatPrice(order.discountCents)}</dd>
+              </div>
+            )}
+            <div className="flex justify-between font-semibold">
+              <dt>Total</dt>
+              <dd>{formatPrice(order.totalCents)}</dd>
+            </div>
+          </dl>
         </footer>
       )}
     </article>

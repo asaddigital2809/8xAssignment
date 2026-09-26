@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { check, index, integer, pgEnum, pgTable, primaryKey, real, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
+import { boolean, check, index, integer, pgEnum, pgTable, primaryKey, real, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 
 // ---------------------------------------------------------------------------
 // Auth. `users` and `accounts` follow the Auth.js Drizzle adapter shape; the extra
@@ -142,6 +142,11 @@ export const orders = pgTable(
     shipCity: text("ship_city").notNull(),
     shipPostalCode: text("ship_postal_code").notNull(),
     shipCountry: text("ship_country").notNull(),
+    /** Coupon applied (code snapshot); discountCents above holds what it was worth. */
+    couponCode: text("coupon_code"),
+    // Payment method snapshot (brand + last4 only; nullable for orders placed before step 4).
+    paymentBrand: text("payment_brand"),
+    paymentLast4: text("payment_last4"),
     /** Client-generated per checkout attempt; a repeated "Place order" returns the same order. */
     idempotencyKey: text("idempotency_key").notNull(),
     createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
@@ -170,4 +175,110 @@ export const orderItems = pgTable(
     quantity: integer("quantity").notNull(),
   },
   (t) => [primaryKey({ columns: [t.orderId, t.productId] }), check("order_items_quantity_positive", sql`${t.quantity} > 0`)],
+);
+
+// ---------------------------------------------------------------------------
+// Address book & payment methods (owned by a user; every query filters on it)
+// ---------------------------------------------------------------------------
+
+export const addresses = pgTable(
+  "addresses",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    fullName: text("full_name").notNull(),
+    line1: text("line1").notNull(),
+    city: text("city").notNull(),
+    postalCode: text("postal_code").notNull(),
+    country: text("country").notNull(),
+    isDefault: boolean("is_default").notNull().default(false),
+    createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("addresses_user_idx").on(t.userId),
+    // At most one default address per user, enforced by the database.
+    uniqueIndex("addresses_one_default_idx").on(t.userId).where(sql`${t.isDefault}`),
+  ],
+);
+
+/** Mock card on file: brand, last 4 and expiry only. The full number is never stored. */
+export const paymentMethods = pgTable(
+  "payment_methods",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    brand: text("brand").notNull(),
+    last4: text("last4").notNull(),
+    expMonth: integer("exp_month").notNull(),
+    expYear: integer("exp_year").notNull(),
+    holderName: text("holder_name").notNull(),
+    isDefault: boolean("is_default").notNull().default(false),
+    createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("payment_methods_user_idx").on(t.userId),
+    uniqueIndex("payment_methods_one_default_idx").on(t.userId).where(sql`${t.isDefault}`),
+    check("payment_methods_last4", sql`${t.last4} ~ '^[0-9]{4}$'`),
+  ],
+);
+
+// ---------------------------------------------------------------------------
+// Coupons
+// ---------------------------------------------------------------------------
+
+export const couponKindEnum = pgEnum("coupon_kind", ["percent", "fixed"]);
+
+export const coupons = pgTable(
+  "coupons",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    code: text("code").notNull().unique(), // stored upper-case
+    kind: couponKindEnum("kind").notNull(),
+    value: integer("value").notNull(), // percent 1-100, or cents
+    minSubtotalCents: integer("min_subtotal_cents").notNull().default(0),
+    maxDiscountCents: integer("max_discount_cents"),
+    startsAt: timestamp("starts_at", { mode: "date", withTimezone: true }),
+    expiresAt: timestamp("expires_at", { mode: "date", withTimezone: true }),
+    usageLimit: integer("usage_limit"), // total redemptions; null = unlimited
+    timesUsed: integer("times_used").notNull().default(0),
+    oncePerUser: boolean("once_per_user").notNull().default(false),
+    active: boolean("active").notNull().default(true),
+    createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    check("coupons_value_valid", sql`(${t.kind} = 'percent' AND ${t.value} BETWEEN 1 AND 100) OR (${t.kind} = 'fixed' AND ${t.value} > 0)`),
+    check("coupons_usage_valid", sql`${t.timesUsed} >= 0 AND (${t.usageLimit} IS NULL OR ${t.timesUsed} <= ${t.usageLimit})`),
+  ],
+);
+
+/** One row per order that used a coupon. Enforces once-per-user in the database too. */
+export const couponRedemptions = pgTable(
+  "coupon_redemptions",
+  {
+    couponId: text("coupon_id")
+      .notNull()
+      .references(() => coupons.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    orderId: text("order_id")
+      .notNull()
+      .references(() => orders.id, { onDelete: "cascade" }),
+    oncePerUser: boolean("once_per_user").notNull(),
+    createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.couponId, t.orderId] }),
+    uniqueIndex("coupon_redemptions_once_per_user_idx").on(t.couponId, t.userId).where(sql`${t.oncePerUser}`),
+  ],
 );

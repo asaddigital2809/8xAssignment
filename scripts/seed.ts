@@ -8,7 +8,7 @@ import { config } from "dotenv";
 config({ path: ".env.local" });
 
 import { Pool } from "@neondatabase/serverless";
-import { sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/neon-serverless";
 import catalog from "../src/data/catalog.json";
 import * as schema from "../src/db/schema";
@@ -21,6 +21,16 @@ const DEMO_USERS = [
   { name: "Sam Shopper", email: "shopper@amzn.clone", password: "Shopper12345", role: "user" },
   { name: "Riley Buyer", email: "riley@amzn.clone", password: "Riley12345", role: "user" },
 ] as const;
+
+const YEAR_MS = 365 * 24 * 60 * 60 * 1000;
+const DEMO_COUPONS: (typeof schema.coupons.$inferInsert)[] = [
+  // 10% off, capped at $50, once per customer.
+  { code: "WELCOME10", kind: "percent", value: 10, maxDiscountCents: 5000, oncePerUser: true, active: true },
+  // $20 off orders of $100+.
+  { code: "SAVE20", kind: "fixed", value: 2000, minSubtotalCents: 10000, active: true },
+  // Already expired, to demo the rejection message.
+  { code: "EXPIRED5", kind: "fixed", value: 500, expiresAt: new Date(Date.now() - YEAR_MS), active: true },
+];
 
 async function main() {
   const url = process.env.DATABASE_URL;
@@ -70,8 +80,43 @@ async function main() {
       .onConflictDoUpdate({ target: schema.users.email, set: values });
   }
 
-  console.log(`Seeded ${catalog.categories.length} categories, ${catalog.products.length} products.`);
+  // Coupons: definitions are upserted; usage counters are left alone (they must match redemptions).
+  for (const c of DEMO_COUPONS) {
+    await db.insert(schema.coupons).values(c).onConflictDoUpdate({ target: schema.coupons.code, set: c });
+  }
+
+  // A saved address and card for the demo shoppers, only if they have none yet.
+  for (const email of ["shopper@amzn.clone", "riley@amzn.clone"]) {
+    const [user] = await db.select({ id: schema.users.id, name: schema.users.name }).from(schema.users).where(eq(schema.users.email, email));
+    const [hasAddress] = await db.select({ id: schema.addresses.id }).from(schema.addresses).where(eq(schema.addresses.userId, user.id)).limit(1);
+    if (!hasAddress) {
+      await db.insert(schema.addresses).values({
+        userId: user.id,
+        fullName: user.name ?? "Demo Shopper",
+        line1: "12 Mall Road",
+        city: "Lahore",
+        postalCode: "54000",
+        country: "Pakistan",
+        isDefault: true,
+      });
+    }
+    const [hasCard] = await db.select({ id: schema.paymentMethods.id }).from(schema.paymentMethods).where(eq(schema.paymentMethods.userId, user.id)).limit(1);
+    if (!hasCard) {
+      await db.insert(schema.paymentMethods).values({
+        userId: user.id,
+        brand: "visa",
+        last4: "4242",
+        expMonth: 12,
+        expYear: new Date().getFullYear() + 3,
+        holderName: user.name ?? "Demo Shopper",
+        isDefault: true,
+      });
+    }
+  }
+
+  console.log(`Seeded ${catalog.categories.length} categories, ${catalog.products.length} products, ${DEMO_COUPONS.length} coupons.`);
   console.log(`Demo users: ${DEMO_USERS.map((u) => `${u.email} / ${u.password} (${u.role})`).join(", ")}`);
+  console.log(`Coupons: ${DEMO_COUPONS.map((c) => c.code).join(", ")}`);
   await pool.end();
 }
 

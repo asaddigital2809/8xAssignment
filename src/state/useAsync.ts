@@ -38,6 +38,8 @@ export function useAsync<T>(key: string, load: (signal: AbortSignal) => Promise<
   }, [requestKey]);
 
   const retry = useCallback(() => setAttempt((n) => n + 1), []);
+  /** Replace the data with a mutation's response (e.g. the updated list) without refetching. */
+  const replace = useCallback((data: T) => setSettled({ requestKey, state: { status: "success", data } }), [requestKey]);
   const state: AsyncState<T> = settled?.requestKey === requestKey ? settled.state : LOADING;
-  return { state, retry };
+  return { state, retry, replace };
 }

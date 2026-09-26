@@ -46,6 +46,12 @@ describe("buildOrderDraft", () => {
     expect(draft.lines[0]).not.toHaveProperty("stock");
   });
 
+  it("applies a discount but never below zero", () => {
+    expect(buildOrderDraft([line()], address, 500)).toMatchObject({ subtotalCents: 2000, discountCents: 500, totalCents: 1500 });
+    expect(buildOrderDraft([line()], address, 99999)).toMatchObject({ discountCents: 2000, totalCents: 0 });
+    expect(buildOrderDraft([line()], address, -50)).toMatchObject({ discountCents: 0, totalCents: 2000 });
+  });
+
   it("refuses an empty cart, an invalid address, or more than is in stock", () => {
     expect(() => buildOrderDraft([], address)).toThrow(CheckoutError);
     expect(() => buildOrderDraft([line()], EMPTY_ADDRESS)).toThrow(CheckoutError);

@@ -22,6 +22,13 @@
       "when": 1790449641672,
       "tag": "0002_cart_orders",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1790450572786,
+      "tag": "0003_checkout_coupons_addresses",
+      "breakpoints": true
     }
   ]
 }

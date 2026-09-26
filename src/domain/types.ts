@@ -41,6 +41,8 @@ export type Address = {
   country: string;
 };
 
+export type SavedAddress = Address & { id: string; isDefault: boolean };
+
 export type OrderLine = {
   productId: string;
   title: string;
@@ -61,6 +63,18 @@ export type Order = {
   subtotalCents: number;
   discountCents: number;
   totalCents: number;
+  couponCode: string | null;
+  payment: { brand: string; last4: string } | null;
+};
+
+/** Server-computed price breakdown for the review step. */
+export type CheckoutQuote = {
+  subtotalCents: number;
+  discountCents: number;
+  totalCents: number;
+  coupon: { code: string; description: string } | null;
+  /** Set when a coupon code was given but doesn't apply; the quote is then without it. */
+  couponError: string | null;
 };
 
 export type ProductQuery = {

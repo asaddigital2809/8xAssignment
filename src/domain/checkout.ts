@@ -57,15 +57,19 @@ export function stockShortfalls(lines: PricedLine[]): string[] {
   return lines.filter((l) => l.quantity > l.stock).map((l) => l.title);
 }
 
-/** Validates and prices an order from server-side data. Throws CheckoutError for user-fixable problems. */
-export function buildOrderDraft(lines: PricedLine[], address: Address): OrderDraft {
+/**
+ * Validates and prices an order from server-side data. Throws CheckoutError for
+ * user-fixable problems. `discountCents` comes from a server-validated coupon and is
+ * clamped so the total can never go negative.
+ */
+export function buildOrderDraft(lines: PricedLine[], address: Address, discountCents = 0): OrderDraft {
   if (lines.length === 0) throw new CheckoutError("Your cart is empty.");
   if (!isValid(validateAddress(address))) throw new CheckoutError("The shipping address is incomplete.");
   const short = stockShortfalls(lines);
   if (short.length > 0) throw new CheckoutError(`Not enough stock for: ${short.join(", ")}. Update your cart and try again.`);
 
   const subtotalCents = subtotalOf(lines);
-  const discountCents = 0; // coupons: step 4
+  discountCents = Math.max(0, Math.min(Math.floor(discountCents), subtotalCents));
   return {
     lines: lines.map(({ productId, title, thumbnail, unitPriceCents, quantity }) => ({
       productId,

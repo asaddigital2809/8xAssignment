@@ -3,9 +3,19 @@ import { randomBytes } from "node:crypto";
 import { and, desc, eq, gte, inArray, sql } from "drizzle-orm";
 import { db, withTransaction, type Tx } from "@/db/client";
 import { cartItems, orderItems, orders, products } from "@/db/schema";
-import { buildOrderDraft, canPay, CheckoutError } from "@/domain/checkout";
+import { buildOrderDraft, canPay, CheckoutError, subtotalOf } from "@/domain/checkout";
+import type { PaymentMethod } from "@/domain/payment";
 import type { Address, Order } from "@/domain/types";
+import { getAddress } from "./addressService";
+import { recordRedemption, reserveCoupon, type CouponReservation } from "./couponService";
 import { ConflictError, NotFoundError } from "./errors";
+import { requireUsablePaymentMethod } from "./paymentMethodService";
+
+export type CheckoutSelection = {
+  addressId: string;
+  paymentMethodId: string;
+  couponCode?: string;
+};
 
 type OrderRow = typeof orders.$inferSelect;
 type ItemRow = typeof orderItems.$inferSelect;
@@ -23,6 +33,8 @@ function toOrder(row: OrderRow, items: ItemRow[]): Order {
     subtotalCents: row.subtotalCents,
     discountCents: row.discountCents,
     totalCents: row.totalCents,
+    couponCode: row.couponCode,
+    payment: row.paymentBrand && row.paymentLast4 ? { brand: row.paymentBrand, last4: row.paymentLast4 } : null,
     address: {
       fullName: row.shipName,
       line1: row.shipLine1,
@@ -72,18 +84,22 @@ async function findByIdempotencyKey(userId: string, key: string): Promise<Order 
 }
 
 /**
- * Creates a pending order from the user's server-side cart. Prices, totals and stock
- * are read from the database inside the transaction; nothing numeric comes from the
- * client. The cart rows are locked so two concurrent checkouts can't both consume them.
- * Repeating the call with the same idempotency key returns the same order.
+ * Creates a pending order from the user's server-side cart. Prices, totals, stock and
+ * the coupon discount are all determined server-side inside the transaction; the client
+ * only names *which* saved address / card / coupon code to use. The address and card are
+ * resolved as the caller's own (someone else's id is a 404). The cart rows are locked so
+ * two concurrent checkouts can't both consume them. Same idempotency key => same order.
  */
-export async function createOrder(userId: string, address: Address, idempotencyKey: string): Promise<Order> {
+export async function createOrder(userId: string, selection: CheckoutSelection, idempotencyKey: string): Promise<Order> {
   const existing = await findByIdempotencyKey(userId, idempotencyKey);
   if (existing) return existing;
 
+  const address = await getAddress(userId, selection.addressId);
+  const payment = await requireUsablePaymentMethod(userId, selection.paymentMethodId);
+
   let orderId: string | null;
   try {
-    orderId = await createFromCart(userId, address, idempotencyKey);
+    orderId = await createFromCart(userId, address, payment, selection.couponCode, idempotencyKey);
   } catch (err) {
     // A concurrent request with the same key may have won the cart lock and emptied the
     // cart, so this one sees "cart is empty". That's a duplicate, not a failure.
@@ -103,7 +119,13 @@ export async function createOrder(userId: string, address: Address, idempotencyK
 }
 
 /** The transactional part of createOrder. Returns null if a same-key order was inserted concurrently. */
-function createFromCart(userId: string, address: Address, idempotencyKey: string): Promise<string | null> {
+function createFromCart(
+  userId: string,
+  address: Address,
+  payment: PaymentMethod,
+  couponCode: string | undefined,
+  idempotencyKey: string,
+): Promise<string | null> {
   return withTransaction(async (tx) => {
     const lines = await tx
       .select({
@@ -119,7 +141,13 @@ function createFromCart(userId: string, address: Address, idempotencyKey: string
       .where(eq(cartItems.userId, userId))
       .for("update", { of: cartItems });
 
-    const draft = buildOrderDraft(lines, address);
+    // Coupon: re-validated under a row lock against the subtotal computed from DB prices.
+    let coupon: CouponReservation | undefined;
+    if (couponCode?.trim() && lines.length > 0) {
+      coupon = await reserveCoupon(tx, userId, couponCode, subtotalOf(lines));
+    }
+
+    const draft = buildOrderDraft(lines, address, coupon?.discountCents ?? 0);
     const id = newOrderId();
     const inserted = await tx
       .insert(orders)
@@ -129,6 +157,9 @@ function createFromCart(userId: string, address: Address, idempotencyKey: string
         subtotalCents: draft.subtotalCents,
         discountCents: draft.discountCents,
         totalCents: draft.totalCents,
+        couponCode: coupon?.code ?? null,
+        paymentBrand: payment.brand,
+        paymentLast4: payment.last4,
         shipName: draft.address.fullName,
         shipLine1: draft.address.line1,
         shipCity: draft.address.city,
@@ -141,6 +172,7 @@ function createFromCart(userId: string, address: Address, idempotencyKey: string
     if (inserted.length === 0) return null; // a concurrent request with the same key won
 
     await tx.insert(orderItems).values(draft.lines.map((l) => ({ orderId: id, ...l })));
+    if (coupon) await recordRedemption(tx, coupon, userId, id);
     await tx.delete(cartItems).where(eq(cartItems.userId, userId));
     return id;
   });
