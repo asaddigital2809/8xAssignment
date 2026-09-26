@@ -33,6 +33,19 @@ export function withUser(fn: (user: SessionUser) => Promise<Response>): Promise<
   });
 }
 
+/**
+ * For /api/admin/*: the role is read from the database on every request (getCurrentUser
+ * re-reads the user row; nothing is trusted from the JWT but the user id). Non-admins,
+ * signed in or not, get a 404 so the admin API isn't advertised.
+ */
+export function withAdmin(fn: (admin: SessionUser) => Promise<Response>): Promise<Response> {
+  return handle(async () => {
+    const user = await getCurrentUser();
+    if (!user || user.role !== "admin") return json(404, "Not found");
+    return fn(user);
+  });
+}
+
 export function notFound(message = "Not found") {
   return json(404, message);
 }

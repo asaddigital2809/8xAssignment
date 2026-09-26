@@ -17,7 +17,8 @@ function toProduct(row: ProductRow): Product {
     priceCents: row.priceCents,
     rating: row.rating,
     reviewCount: row.reviewCount,
-    stock: row.stock,
+    // Archived products stay viewable (old order links) but read as unavailable.
+    stock: row.archived ? 0 : row.stock,
     thumbnail: row.thumbnail,
     images: row.images,
   };
@@ -31,7 +32,7 @@ export async function searchProducts(query: ProductQuery): Promise<Product[]> {
   const { terms, categoryId } = sanitizeQuery(query);
   if (categoryId === null) return []; // malformed filter matches nothing
 
-  const conditions: SQL[] = [];
+  const conditions: SQL[] = [eq(products.archived, false)];
   if (categoryId) conditions.push(eq(products.categoryId, categoryId));
   for (const term of terms) {
     const pattern = `%${escapeLike(term)}%`;
@@ -49,7 +50,7 @@ export async function searchProducts(query: ProductQuery): Promise<Product[]> {
     .select({ product: products })
     .from(products)
     .innerJoin(categories, eq(categories.id, products.categoryId))
-    .where(conditions.length ? and(...conditions) : undefined)
+    .where(and(...conditions))
     .orderBy(asc(products.title));
   return rows.map((r) => toProduct(r.product));
 }
@@ -59,7 +60,7 @@ export async function listFeatured(limit = 12): Promise<Product[]> {
   const rows = await db
     .select()
     .from(products)
-    .where(gt(products.stock, 0))
+    .where(and(gt(products.stock, 0), eq(products.archived, false)))
     .orderBy(desc(products.rating), asc(products.id))
     .limit(limit);
   return rows.map(toProduct);

@@ -6,6 +6,7 @@ import { cartSubtotal, clampQuantity, maxQuantityFor } from "@/domain/cart";
 import { CheckoutError } from "@/domain/checkout";
 import type { Cart } from "@/domain/types";
 import { NotFoundError } from "./errors";
+import { availableStock } from "./stock";
 
 /** The user's cart, priced from the catalog right now. Quantities over stock are kept and flagged via maxQuantity. */
 export async function getCart(userId: string): Promise<Cart> {
@@ -16,7 +17,7 @@ export async function getCart(userId: string): Promise<Cart> {
       title: products.title,
       priceCents: products.priceCents,
       thumbnail: products.thumbnail,
-      stock: products.stock,
+      stock: availableStock,
     })
     .from(cartItems)
     .innerJoin(products, eq(products.id, cartItems.productId))
@@ -29,7 +30,7 @@ export async function getCart(userId: string): Promise<Cart> {
 
 async function findProduct(productId: string) {
   const [product] = await db
-    .select({ id: products.id, stock: products.stock })
+    .select({ id: products.id, stock: availableStock })
     .from(products)
     .where(eq(products.id, productId))
     .limit(1);

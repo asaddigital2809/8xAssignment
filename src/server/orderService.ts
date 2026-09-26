@@ -10,6 +10,7 @@ import { getAddress } from "./addressService";
 import { recordRedemption, reserveCoupon, type CouponReservation } from "./couponService";
 import { ConflictError, NotFoundError } from "./errors";
 import { requireUsablePaymentMethod } from "./paymentMethodService";
+import { availableStock } from "./stock";
 
 export type CheckoutSelection = {
   addressId: string;
@@ -67,6 +68,16 @@ export async function getOrder(userId: string, orderId: string): Promise<Order> 
     .limit(1);
   if (!row) throw new NotFoundError("Order not found.");
   return toOrder(row, await loadItems([row.id]));
+}
+
+/**
+ * ADMIN ONLY: reads any user's order (no owner filter). Only call this from code that
+ * has already verified the caller is an admin (server/admin/*, behind withAdmin/requireAdmin).
+ */
+export async function getOrderForAdmin(orderId: string): Promise<{ order: Order; userId: string }> {
+  const [row] = await db.select().from(orders).where(eq(orders.id, orderId)).limit(1);
+  if (!row) throw new NotFoundError("Order not found.");
+  return { order: toOrder(row, await loadItems([row.id])), userId: row.userId };
 }
 
 export async function listOrders(userId: string, status?: OrderStatus): Promise<Order[]> {
@@ -138,7 +149,7 @@ function createFromCart(
         title: products.title,
         thumbnail: products.thumbnail,
         unitPriceCents: products.priceCents,
-        stock: products.stock,
+        stock: availableStock, // archived products can't be bought
         quantity: cartItems.quantity,
       })
       .from(cartItems)

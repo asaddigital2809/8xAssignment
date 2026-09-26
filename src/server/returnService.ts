@@ -150,3 +150,9 @@ export async function getReturn(userId: string, returnId: string): Promise<Retur
   if (rows.length === 0) throw new NotFoundError("Return not found.");
   return (await toViews(rows))[0];
 }
+
+/** ADMIN ONLY (no owner filter): every return request for an order. */
+export async function listReturnsForOrderAdmin(orderId: string): Promise<ReturnRequestView[]> {
+  const rows = await db.select().from(returns).where(eq(returns.orderId, orderId)).orderBy(desc(returns.createdAt));
+  return toViews(rows);
+}
