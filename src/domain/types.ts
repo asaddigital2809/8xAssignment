@@ -33,6 +33,16 @@ export type Cart = {
   subtotalCents: number;
 };
 
+/** A saved-for-later product with its current price and availability. */
+export type WishlistItem = {
+  productId: string;
+  title: string;
+  priceCents: number;
+  thumbnail: string;
+  inStock: boolean;
+  addedAt: string;
+};
+
 export type Address = {
   fullName: string;
   line1: string;

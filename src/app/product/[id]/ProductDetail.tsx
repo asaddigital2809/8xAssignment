@@ -10,6 +10,7 @@ import { formatPrice } from "@/domain/money";
 import type { Product } from "@/domain/types";
 import { useCartStore } from "@/state/cartStore";
 import { useProduct } from "@/state/catalogQueries";
+import { useIsSaved, useWishlistStore } from "@/state/wishlistStore";
 
 export function ProductDetail({ id }: { id: string }) {
   const { state, retry } = useProduct(id);
@@ -57,7 +58,45 @@ function ProductView({ product }: { product: Product }) {
         <p className="text-3xl font-semibold">{formatPrice(product.priceCents)}</p>
         <p className="text-gray-700">{product.description}</p>
         <AddToCart product={product} />
+        <WishlistButton productId={product.id} />
       </div>
+    </div>
+  );
+}
+
+/** Save for later. Works for out-of-stock items too; signed-out users go to sign-in (401). */
+function WishlistButton({ productId }: { productId: string }) {
+  const saved = useIsSaved(productId);
+  const busy = useWishlistStore((s) => s.busy === productId);
+  const error = useWishlistStore((s) => s.mutationError);
+  const { add, remove } = useWishlistStore.getState();
+
+  return (
+    <div className="space-y-1">
+      {saved ? (
+        <p className="flex items-center gap-3 text-sm">
+          <span className="font-medium text-green-700">✓ Saved to your wish list</span>
+          <Link href="/account/wishlist" className="text-blue-700 hover:underline">
+            View
+          </Link>
+          <button onClick={() => remove(productId)} disabled={busy} className="text-blue-700 hover:underline disabled:opacity-50">
+            Remove
+          </button>
+        </p>
+      ) : (
+        <button
+          onClick={() => add(productId)}
+          disabled={busy}
+          className="w-full rounded-full border border-gray-300 bg-white py-2 text-sm font-medium hover:bg-gray-50 disabled:opacity-60"
+        >
+          {busy ? "Saving…" : "Add to Wish List"}
+        </button>
+      )}
+      {error && (
+        <p role="alert" className="text-sm text-red-700">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

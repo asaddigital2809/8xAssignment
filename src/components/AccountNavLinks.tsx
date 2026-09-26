@@ -7,6 +7,7 @@ const LINKS = [
   { href: "/account", label: "Profile" },
   { href: "/orders", label: "Your orders" },
   { href: "/account/returns", label: "Returns" },
+  { href: "/account/wishlist", label: "Wish list" },
   { href: "/account/addresses", label: "Addresses" },
   { href: "/account/payments", label: "Payment methods" },
   { href: "/account/security", label: "Password & security" },

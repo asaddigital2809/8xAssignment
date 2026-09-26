@@ -36,6 +36,13 @@
       "when": 1790453166673,
       "tag": "0004_returns",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790457584944,
+      "tag": "0005_wishlist",
+      "breakpoints": true
     }
   ]
 }

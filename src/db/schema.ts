@@ -122,6 +122,21 @@ export const cartItems = pgTable(
   (t) => [primaryKey({ columns: [t.userId, t.productId] }), check("cart_items_quantity_positive", sql`${t.quantity} > 0`)],
 );
 
+/** Saved-for-later products. Like the cart, only intent is stored; price/stock are read live. */
+export const wishlistItems = pgTable(
+  "wishlist_items",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    productId: text("product_id")
+      .notNull()
+      .references(() => products.id, { onDelete: "cascade" }),
+    addedAt: timestamp("added_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.productId] })],
+);
+
 export const orderStatusEnum = pgEnum("order_status", ["pending_payment", "paid", "shipped", "delivered", "cancelled"]);
 
 export const orders = pgTable(

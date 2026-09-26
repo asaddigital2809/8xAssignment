@@ -4,6 +4,7 @@ import { requireUser } from "@/server/dal";
 const SECTIONS = [
   { href: "/orders", title: "Your orders", body: "Track orders and filter by status" },
   { href: "/account/returns", title: "Returns", body: "Return requests and their status" },
+  { href: "/account/wishlist", title: "Wish list", body: "Items saved for later" },
   { href: "/account/addresses", title: "Addresses", body: "Shipping addresses and your default" },
   { href: "/account/payments", title: "Payment methods", body: "Saved cards and your default" },
   { href: "/account/security", title: "Password & security", body: "Change your password" },

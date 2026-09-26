@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { signOutAction } from "@/app/(auth)/actions";
 import { getCurrentUser } from "@/server/dal";
-import { CartLoader } from "./CartLoader";
+import { SessionDataLoader } from "./SessionDataLoader";
 
 export async function AccountNav() {
   const user = await getCurrentUser();
@@ -9,7 +9,7 @@ export async function AccountNav() {
   if (!user) {
     return (
       <>
-        <CartLoader userId={null} />
+        <SessionDataLoader userId={null} />
         <Link href="/signin" className="hover:underline">
           Sign in
         </Link>
@@ -18,7 +18,7 @@ export async function AccountNav() {
   }
   return (
     <>
-      <CartLoader userId={user.id} />
+      <SessionDataLoader userId={user.id} />
       <Link href="/account" className="hover:underline">
         Hello, {user.name?.split(" ")[0] ?? "account"}
       </Link>
