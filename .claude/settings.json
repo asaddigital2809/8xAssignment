@@ -1,0 +1,40 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "powershell",
+            "command": "node \"$env:CLAUDE_PROJECT_DIR/.claude/hooks/capture.js\" SessionStart",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "powershell",
+            "command": "node \"$env:CLAUDE_PROJECT_DIR/.claude/hooks/capture.js\" UserPromptSubmit",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "powershell",
+            "command": "node \"$env:CLAUDE_PROJECT_DIR/.claude/hooks/capture.js\" Stop",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}
