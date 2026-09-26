@@ -1,4 +1,5 @@
-import { index, integer, pgEnum, pgTable, primaryKey, real, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import { check, index, integer, pgEnum, pgTable, primaryKey, real, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 
 // ---------------------------------------------------------------------------
 // Auth. `users` and `accounts` follow the Auth.js Drizzle adapter shape; the extra
@@ -93,5 +94,80 @@ export const products = pgTable(
     images: text("images").array().notNull().default([]),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [index("products_category_idx").on(t.categoryId)],
+  (t) => [
+    index("products_category_idx").on(t.categoryId),
+    // Backstop: the database itself refuses to oversell, whatever the app does.
+    check("products_stock_nonnegative", sql`${t.stock} >= 0`),
+    check("products_price_nonnegative", sql`${t.priceCents} >= 0`),
+  ],
+);
+
+// ---------------------------------------------------------------------------
+// Cart & orders. Every row is owned by a user and every query filters on it.
+// ---------------------------------------------------------------------------
+
+/** The cart stores intent only (product + quantity). Prices are always read from `products`. */
+export const cartItems = pgTable(
+  "cart_items",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    productId: text("product_id")
+      .notNull()
+      .references(() => products.id, { onDelete: "cascade" }),
+    quantity: integer("quantity").notNull(),
+    addedAt: timestamp("added_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.productId] }), check("cart_items_quantity_positive", sql`${t.quantity} > 0`)],
+);
+
+export const orderStatusEnum = pgEnum("order_status", ["pending_payment", "paid", "shipped", "delivered", "cancelled"]);
+
+export const orders = pgTable(
+  "orders",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "restrict" }),
+    status: orderStatusEnum("status").notNull().default("pending_payment"),
+    // All amounts computed server-side from `products` at order time (integer cents).
+    subtotalCents: integer("subtotal_cents").notNull(),
+    discountCents: integer("discount_cents").notNull().default(0),
+    totalCents: integer("total_cents").notNull(),
+    // Shipping address snapshot (the address book can change later; the order must not).
+    shipName: text("ship_name").notNull(),
+    shipLine1: text("ship_line1").notNull(),
+    shipCity: text("ship_city").notNull(),
+    shipPostalCode: text("ship_postal_code").notNull(),
+    shipCountry: text("ship_country").notNull(),
+    /** Client-generated per checkout attempt; a repeated "Place order" returns the same order. */
+    idempotencyKey: text("idempotency_key").notNull(),
+    createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
+    paidAt: timestamp("paid_at", { mode: "date", withTimezone: true }),
+  },
+  (t) => [
+    index("orders_user_idx").on(t.userId, t.createdAt),
+    uniqueIndex("orders_user_idempotency_idx").on(t.userId, t.idempotencyKey),
+    check("orders_amounts_valid", sql`${t.totalCents} >= 0 AND ${t.discountCents} >= 0 AND ${t.totalCents} = ${t.subtotalCents} - ${t.discountCents}`),
+  ],
+);
+
+export const orderItems = pgTable(
+  "order_items",
+  {
+    orderId: text("order_id")
+      .notNull()
+      .references(() => orders.id, { onDelete: "cascade" }),
+    // restrict: products that were ordered are archived, not deleted (admin, step 8).
+    productId: text("product_id")
+      .notNull()
+      .references(() => products.id, { onDelete: "restrict" }),
+    title: text("title").notNull(),
+    thumbnail: text("thumbnail").notNull(),
+    unitPriceCents: integer("unit_price_cents").notNull(),
+    quantity: integer("quantity").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.orderId, t.productId] }), check("order_items_quantity_positive", sql`${t.quantity} > 0`)],
 );

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { FormEvent, ReactNode } from "react";
-import { useCartCount, useCartHydrated } from "@/state/cartStore";
+import { useCartCount, useCartStatus } from "@/state/cartStore";
 
 /** `account` is a server-rendered slot (sign-in state), passed in from the layout. */
 export function Header({ account }: { account: ReactNode }) {
@@ -62,11 +62,15 @@ function SearchBar() {
 
 function CartLink() {
   const count = useCartCount();
-  const hydrated = useCartHydrated();
+  const status = useCartStatus();
   return (
     <Link href="/cart" className="flex items-center gap-1 font-medium hover:underline">
       Cart
-      <span className="min-w-6 rounded-full bg-amber-400 px-1.5 text-center text-sm text-gray-900">{hydrated ? count : "·"}</span>
+      {status !== "signed-out" && (
+        <span className="min-w-6 rounded-full bg-amber-400 px-1.5 text-center text-sm text-gray-900">
+          {status === "ready" ? count : "·"}
+        </span>
+      )}
     </Link>
   );
 }

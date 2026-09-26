@@ -2,10 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import type { FormEvent } from "react";
-import { EmptyView, Spinner } from "@/components/StatusViews";
+import { EmptyView, ErrorView, Spinner } from "@/components/StatusViews";
 import { formatPrice } from "@/domain/money";
 import type { Address } from "@/domain/types";
-import { useCartHydrated, useCartItems, useCartSubtotal } from "@/state/cartStore";
+import { useCart, useCartStatus, useCartStore } from "@/state/cartStore";
 import { useAddressForm } from "@/state/checkoutForm";
 import { usePlaceOrder } from "@/state/orders";
 
@@ -19,9 +19,9 @@ const FIELDS: { name: keyof Address; label: string; autoComplete: string }[] = [
 
 export function CheckoutView() {
   const router = useRouter();
-  const hydrated = useCartHydrated();
-  const items = useCartItems();
-  const subtotal = useCartSubtotal();
+  const status = useCartStatus();
+  const cart = useCart();
+  const loadError = useCartStore((s) => s.loadError);
   const form = useAddressForm();
   const { state, submit } = usePlaceOrder();
 
@@ -33,11 +33,23 @@ export function CheckoutView() {
     if (order) router.push(`/orders/${order.id}?placed=1`);
   }
 
-  if (!hydrated) return <Spinner label="Loading your cart…" />;
   if (state.status === "placed") return <Spinner label="Order placed. Opening confirmation…" />;
-  if (items.length === 0) {
+  if (status === "loading") return <Spinner label="Loading your cart…" />;
+  if (status === "error" || !cart) {
+    return <ErrorView message={loadError ?? "Couldn't load your cart."} onRetry={() => void useCartStore.getState().load()} />;
+  }
+  if (cart.items.length === 0) {
+    // Payment can fail after the order was created (cart already emptied): keep the error visible.
+    if (state.status === "error") {
+      return (
+        <EmptyView title="Payment didn't go through" action={{ href: "/orders", label: "View your orders" }}>
+          {state.message}
+        </EmptyView>
+      );
+    }
     return <EmptyView title="Nothing to check out" action={{ href: "/", label: "Continue shopping" }} />;
   }
+  const { items, subtotalCents: subtotal } = cart;
 
   const submitting = state.status === "submitting";
 

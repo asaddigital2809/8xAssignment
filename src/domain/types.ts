@@ -18,7 +18,7 @@ export type Product = {
   images: string[];
 };
 
-/** A cart line snapshots the product fields it needs so the cart renders without a catalog fetch. */
+/** A cart line as served by the API: product fields and price are read live from the catalog. */
 export type CartItem = {
   productId: string;
   title: string;
@@ -26,6 +26,11 @@ export type CartItem = {
   thumbnail: string;
   maxQuantity: number;
   quantity: number;
+};
+
+export type Cart = {
+  items: CartItem[];
+  subtotalCents: number;
 };
 
 export type Address = {
@@ -44,12 +49,18 @@ export type OrderLine = {
   quantity: number;
 };
 
+export type OrderStatus = "pending_payment" | "paid" | "shipped" | "delivered" | "cancelled";
+
 export type Order = {
   id: string;
+  status: OrderStatus;
   placedAt: string;
+  paidAt: string | null;
   lines: OrderLine[];
   address: Address;
   subtotalCents: number;
+  discountCents: number;
+  totalCents: number;
 };
 
 export type ProductQuery = {

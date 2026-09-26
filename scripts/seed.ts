@@ -19,6 +19,7 @@ import { hashPassword } from "../src/server/password";
 const DEMO_USERS = [
   { name: "Admin User", email: "admin@amzn.clone", password: "Admin12345", role: "admin" },
   { name: "Sam Shopper", email: "shopper@amzn.clone", password: "Shopper12345", role: "user" },
+  { name: "Riley Buyer", email: "riley@amzn.clone", password: "Riley12345", role: "user" },
 ] as const;
 
 async function main() {

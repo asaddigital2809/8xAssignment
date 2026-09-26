@@ -1,6 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { buildOrder, CheckoutError, EMPTY_ADDRESS, isValid, validateAddress } from "./checkout";
-import type { Address, CartItem } from "./types";
+import {
+  buildOrderDraft,
+  canPay,
+  CheckoutError,
+  EMPTY_ADDRESS,
+  isValid,
+  stockShortfalls,
+  validateAddress,
+  type PricedLine,
+} from "./checkout";
+import type { Address } from "./types";
 
 const address: Address = {
   fullName: " Asad Khan ",
@@ -10,25 +19,49 @@ const address: Address = {
   country: "Pakistan",
 };
 
-const items: CartItem[] = [
-  { productId: "p1", title: "Phone", priceCents: 1000, thumbnail: "t.png", maxQuantity: 10, quantity: 2 },
-];
+const line = (overrides: Partial<PricedLine> = {}): PricedLine => ({
+  productId: "p1",
+  title: "Phone",
+  thumbnail: "t.png",
+  unitPriceCents: 1000,
+  quantity: 2,
+  stock: 5,
+  ...overrides,
+});
 
-describe("checkout", () => {
+describe("validateAddress", () => {
   it("flags every missing address field", () => {
     expect(Object.keys(validateAddress(EMPTY_ADDRESS)).sort()).toEqual(["city", "country", "fullName", "line1", "postalCode"]);
     expect(isValid(validateAddress(address))).toBe(true);
   });
+});
 
-  it("builds an order snapshot with a trimmed address and subtotal", () => {
-    const order = buildOrder(items, address, new Date("2026-09-26T00:00:00Z"), "ORD-1");
-    expect(order.subtotalCents).toBe(2000);
-    expect(order.address.fullName).toBe("Asad Khan");
-    expect(order.lines).toEqual([{ productId: "p1", title: "Phone", priceCents: 1000, thumbnail: "t.png", quantity: 2 }]);
+describe("buildOrderDraft", () => {
+  it("prices from the given (server-side) unit prices and trims the address", () => {
+    const draft = buildOrderDraft([line(), line({ productId: "p2", title: "Case", unitPriceCents: 250, quantity: 3 })], address);
+    expect(draft.subtotalCents).toBe(2000 + 750);
+    expect(draft.discountCents).toBe(0);
+    expect(draft.totalCents).toBe(2750);
+    expect(draft.address.fullName).toBe("Asad Khan");
+    expect(draft.lines[0]).not.toHaveProperty("stock");
   });
 
-  it("refuses an empty cart or invalid address", () => {
-    expect(() => buildOrder([], address, new Date(), "x")).toThrow(CheckoutError);
-    expect(() => buildOrder(items, EMPTY_ADDRESS, new Date(), "x")).toThrow(CheckoutError);
+  it("refuses an empty cart, an invalid address, or more than is in stock", () => {
+    expect(() => buildOrderDraft([], address)).toThrow(CheckoutError);
+    expect(() => buildOrderDraft([line()], EMPTY_ADDRESS)).toThrow(CheckoutError);
+    expect(() => buildOrderDraft([line({ quantity: 6, stock: 5 })], address)).toThrow(/Not enough stock for: Phone/);
+  });
+});
+
+describe("stockShortfalls", () => {
+  it("lists only lines that exceed stock", () => {
+    expect(stockShortfalls([line({ quantity: 5, stock: 5 }), line({ title: "Case", quantity: 2, stock: 1 })])).toEqual(["Case"]);
+  });
+});
+
+describe("canPay", () => {
+  it("allows paying only a pending order", () => {
+    expect(canPay("pending_payment")).toBe(true);
+    for (const s of ["paid", "shipped", "delivered", "cancelled"] as const) expect(canPay(s)).toBe(false);
   });
 });

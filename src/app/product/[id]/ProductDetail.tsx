@@ -64,7 +64,9 @@ function ProductView({ product }: { product: Product }) {
 
 function AddToCart({ product }: { product: Product }) {
   const add = useCartStore((s) => s.add);
-  const inCart = useCartStore((s) => s.items.find((i) => i.productId === product.id)?.quantity ?? 0);
+  const busy = useCartStore((s) => s.busy === product.id);
+  const error = useCartStore((s) => s.mutationError);
+  const inCart = useCartStore((s) => s.cart?.items.find((i) => i.productId === product.id)?.quantity ?? 0);
   const max = maxQuantityFor(product);
   const [quantity, setQuantity] = useState(1);
 
@@ -83,9 +85,19 @@ function AddToCart({ product }: { product: Product }) {
           ))}
         </select>
       </label>
-      <button onClick={() => add(product, quantity)} className="w-full rounded-full bg-amber-400 py-2 font-medium hover:bg-amber-500">
-        Add to Cart
+      {/* Signed-out users get a 401 from the API and are sent to sign-in, then back here. */}
+      <button
+        onClick={() => add(product.id, quantity)}
+        disabled={busy}
+        className="w-full rounded-full bg-amber-400 py-2 font-medium hover:bg-amber-500 disabled:opacity-60"
+      >
+        {busy ? "Adding…" : "Add to Cart"}
       </button>
+      {error && (
+        <p role="alert" className="text-sm text-red-700">
+          {error}
+        </p>
+      )}
       {inCart > 0 && (
         <p className="text-sm">
           {inCart} in your cart ·{" "}

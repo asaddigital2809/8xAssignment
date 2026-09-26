@@ -1,19 +1,24 @@
 import Link from "next/link";
 import { signOutAction } from "@/app/(auth)/actions";
 import { getCurrentUser } from "@/server/dal";
+import { CartLoader } from "./CartLoader";
 
 export async function AccountNav() {
   const user = await getCurrentUser();
 
   if (!user) {
     return (
-      <Link href="/signin" className="hover:underline">
-        Sign in
-      </Link>
+      <>
+        <CartLoader userId={null} />
+        <Link href="/signin" className="hover:underline">
+          Sign in
+        </Link>
+      </>
     );
   }
   return (
     <>
+      <CartLoader userId={user.id} />
       <Link href="/account" className="hover:underline">
         Hello, {user.name?.split(" ")[0] ?? "account"}
       </Link>

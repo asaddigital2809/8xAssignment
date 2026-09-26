@@ -1,7 +1,16 @@
 import { ProductImage } from "@/components/ProductImage";
 import Link from "next/link";
+import { ORDER_STATUS_LABEL } from "@/domain/checkout";
 import { formatPrice } from "@/domain/money";
-import type { Order } from "@/domain/types";
+import type { Order, OrderStatus } from "@/domain/types";
+
+const STATUS_STYLE: Record<OrderStatus, string> = {
+  pending_payment: "bg-amber-100 text-amber-800",
+  paid: "bg-green-100 text-green-800",
+  shipped: "bg-blue-100 text-blue-800",
+  delivered: "bg-gray-200 text-gray-800",
+  cancelled: "bg-red-100 text-red-800",
+};
 
 export function formatOrderDate(iso: string): string {
   return new Date(iso).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" });
@@ -12,7 +21,8 @@ export function OrderSummary({ order, showAddress = false }: { order: Order; sho
     <article className="rounded bg-white shadow-sm">
       <header className="flex flex-wrap justify-between gap-2 rounded-t bg-gray-50 px-4 py-2 text-sm text-gray-600">
         <span>Placed {formatOrderDate(order.placedAt)}</span>
-        <span>Total {formatPrice(order.subtotalCents)}</span>
+        <span>Total {formatPrice(order.totalCents)}</span>
+        <span className={`rounded px-2 text-xs leading-5 font-medium ${STATUS_STYLE[order.status]}`}>{ORDER_STATUS_LABEL[order.status]}</span>
         <Link href={`/orders/${order.id}`} className="text-blue-700 hover:underline">
           Order # {order.id}
         </Link>
