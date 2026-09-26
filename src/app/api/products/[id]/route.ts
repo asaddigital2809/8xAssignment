@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { getProduct } from "@/server/catalog";
+import { handle, notFound } from "@/server/http";
 
-export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const product = getProduct(id);
-  if (!product) {
-    return NextResponse.json({ error: "Product not found" }, { status: 404 });
-  }
-  return NextResponse.json(product);
+export function GET(_request: Request, { params }: RouteContext<"/api/products/[id]">) {
+  return handle(async () => {
+    const { id } = await params;
+    const product = await getProduct(id);
+    return product ? NextResponse.json(product) : notFound("Product not found");
+  });
 }

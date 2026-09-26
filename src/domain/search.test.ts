@@ -1,29 +1,27 @@
 import { describe, expect, it } from "vitest";
-import { matchesQuery } from "./search";
-import type { Product } from "./types";
+import { escapeLike, MAX_QUERY_LENGTH, MAX_TERMS, sanitizeQuery } from "./search";
 
-const phone: Product = {
-  id: "p1",
-  title: "iPhone 9",
-  description: "An apple mobile",
-  categoryId: "smartphones",
-  brand: "Apple",
-  priceCents: 54900,
-  rating: 4.7,
-  stock: 10,
-  thumbnail: "",
-  images: [],
-};
-
-describe("matchesQuery", () => {
-  it("matches every term case-insensitively across title, brand, description and category", () => {
-    expect(matchesQuery(phone, { text: "APPLE iphone" })).toBe(true);
-    expect(matchesQuery(phone, { text: "phones" }, "Smartphones")).toBe(true);
-    expect(matchesQuery(phone, { text: "apple laptop" })).toBe(false);
+describe("sanitizeQuery", () => {
+  it("lower-cases, splits and de-duplicates terms", () => {
+    expect(sanitizeQuery({ text: "  Apple  iPhone apple " }).terms).toEqual(["apple", "iphone"]);
   });
 
-  it("applies the category filter", () => {
-    expect(matchesQuery(phone, { categoryId: "laptops" })).toBe(false);
-    expect(matchesQuery(phone, { text: "", categoryId: "smartphones" })).toBe(true);
+  it("strips control characters and caps length and term count", () => {
+    expect(sanitizeQuery({ text: "a\u0000b" }).terms).toEqual(["a", "b"]);
+    expect(sanitizeQuery({ text: "x".repeat(500) }).terms[0]).toHaveLength(MAX_QUERY_LENGTH);
+    expect(sanitizeQuery({ text: "a b c d e f g h i j k" }).terms).toHaveLength(MAX_TERMS);
+  });
+
+  it("accepts slug categories and rejects anything else", () => {
+    expect(sanitizeQuery({ categoryId: "smartphones" }).categoryId).toBe("smartphones");
+    expect(sanitizeQuery({ categoryId: "" }).categoryId).toBeUndefined();
+    expect(sanitizeQuery({ categoryId: "x' OR 1=1 --" }).categoryId).toBeNull();
+  });
+});
+
+describe("escapeLike", () => {
+  it("makes wildcards literal", () => {
+    // Input: 50%_off\   Expected: 50\%\_off\\
+    expect(escapeLike("50%_off\\")).toBe("50\\%\\_off\\\\");
   });
 });
