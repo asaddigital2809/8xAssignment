@@ -5,6 +5,7 @@ import {
   CheckoutError,
   EMPTY_ADDRESS,
   isValid,
+  parseOrderStatus,
   stockShortfalls,
   validateAddress,
   type PricedLine,
@@ -62,6 +63,15 @@ describe("buildOrderDraft", () => {
 describe("stockShortfalls", () => {
   it("lists only lines that exceed stock", () => {
     expect(stockShortfalls([line({ quantity: 5, stock: 5 }), line({ title: "Case", quantity: 2, stock: 1 })])).toEqual(["Case"]);
+  });
+});
+
+describe("parseOrderStatus", () => {
+  it("accepts real statuses only", () => {
+    expect(parseOrderStatus("delivered")).toBe("delivered");
+    expect(parseOrderStatus(undefined)).toBeUndefined();
+    expect(parseOrderStatus("")).toBeUndefined();
+    expect(parseOrderStatus("paid' OR 1=1")).toBeNull();
   });
 });
 

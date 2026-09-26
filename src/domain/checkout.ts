@@ -93,6 +93,14 @@ export const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
   cancelled: "Cancelled",
 };
 
+export const ORDER_STATUSES = Object.keys(ORDER_STATUS_LABEL) as OrderStatus[];
+
+/** Parses an untrusted status filter: undefined = all, null = not a real status. */
+export function parseOrderStatus(value: string | null | undefined): OrderStatus | undefined | null {
+  if (!value) return undefined;
+  return (ORDER_STATUSES as string[]).includes(value) ? (value as OrderStatus) : null;
+}
+
 /** Only a pending order can be paid; anything else is a repeat or a stale request. */
 export function canPay(status: OrderStatus): boolean {
   return status === "pending_payment";

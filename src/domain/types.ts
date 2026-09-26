@@ -58,6 +58,7 @@ export type Order = {
   status: OrderStatus;
   placedAt: string;
   paidAt: string | null;
+  deliveredAt: string | null;
   lines: OrderLine[];
   address: Address;
   subtotalCents: number;

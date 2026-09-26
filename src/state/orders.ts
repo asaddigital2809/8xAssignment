@@ -3,12 +3,12 @@
 import { useState } from "react";
 import { HttpError, UnauthorizedError } from "@/data/http";
 import { httpOrderRepository as orders, type CheckoutSelection } from "@/data/orderRepository";
-import type { Order } from "@/domain/types";
+import type { Order, OrderStatus } from "@/domain/types";
 import { useCartStore } from "./cartStore";
 import { redirectToSignIn } from "./navigation";
 import { useAsync } from "./useAsync";
 
-export const useOrders = () => useAsync("orders", (signal) => orders.list(signal));
+export const useOrders = (status?: OrderStatus) => useAsync(`orders:${status ?? "all"}`, (signal) => orders.list(status, signal));
 
 export const useOrder = (id: string) => useAsync(`order:${id}`, (signal) => orders.getById(id, signal));
 

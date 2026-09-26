@@ -147,6 +147,23 @@ async function setNewPassword(userId: string, newPassword: string): Promise<void
     .where(eq(users.id, userId));
 }
 
+export type ChangePasswordResult = { ok: true; email: string } | { ok: false; reason: "wrong_current" | "no_password" | "same" };
+
+/**
+ * Changes a signed-in user's password after re-checking the current one. Bumps
+ * password_changed_at, which revokes every existing session; the caller signs this
+ * device back in with the new password so only *other* sessions are logged out.
+ */
+export async function changePassword(userId: string, current: string, next: string): Promise<ChangePasswordResult> {
+  const [user] = await db.select({ email: users.email, passwordHash: users.passwordHash }).from(users).where(eq(users.id, userId)).limit(1);
+  if (!user) return { ok: false, reason: "wrong_current" };
+  if (!user.passwordHash) return { ok: false, reason: "no_password" };
+  if (!(await verifyPassword(current, user.passwordHash))) return { ok: false, reason: "wrong_current" };
+  if (current === next) return { ok: false, reason: "same" };
+  await setNewPassword(userId, next);
+  return { ok: true, email: user.email };
+}
+
 // --- Fixed-OTP test mode (DEV_FIXED_OTP). Same outcomes as the link flows above. ---
 
 /** Activates an unverified account with the test code. False for a wrong code or unknown/active account. */

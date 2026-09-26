@@ -151,6 +151,8 @@ export const orders = pgTable(
     idempotencyKey: text("idempotency_key").notNull(),
     createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
     paidAt: timestamp("paid_at", { mode: "date", withTimezone: true }),
+    /** Set when the order is marked delivered; starts the return window. */
+    deliveredAt: timestamp("delivered_at", { mode: "date", withTimezone: true }),
   },
   (t) => [
     index("orders_user_idx").on(t.userId, t.createdAt),
@@ -281,4 +283,44 @@ export const couponRedemptions = pgTable(
     primaryKey({ columns: [t.couponId, t.orderId] }),
     uniqueIndex("coupon_redemptions_once_per_user_idx").on(t.couponId, t.userId).where(sql`${t.oncePerUser}`),
   ],
+);
+
+// ---------------------------------------------------------------------------
+// Returns (owned by the order's user; every query filters on it)
+// ---------------------------------------------------------------------------
+
+export const returnStatusEnum = pgEnum("return_status", ["requested", "approved", "rejected", "refunded"]);
+export const returnReasonEnum = pgEnum("return_reason", ["damaged", "wrong_item", "not_as_described", "no_longer_needed", "other"]);
+
+export const returns = pgTable(
+  "returns",
+  {
+    id: text("id").primaryKey(),
+    orderId: text("order_id")
+      .notNull()
+      .references(() => orders.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    status: returnStatusEnum("status").notNull().default("requested"),
+    reason: returnReasonEnum("reason").notNull(),
+    comment: text("comment"),
+    /** Computed server-side from the order's paid prices (discount pro-rated). */
+    refundCents: integer("refund_cents").notNull(),
+    createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("returns_user_idx").on(t.userId, t.createdAt), index("returns_order_idx").on(t.orderId), check("returns_refund_nonnegative", sql`${t.refundCents} >= 0`)],
+);
+
+export const returnItems = pgTable(
+  "return_items",
+  {
+    returnId: text("return_id")
+      .notNull()
+      .references(() => returns.id, { onDelete: "cascade" }),
+    productId: text("product_id").notNull(),
+    quantity: integer("quantity").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.returnId, t.productId] }), check("return_items_quantity_positive", sql`${t.quantity} > 0`)],
 );

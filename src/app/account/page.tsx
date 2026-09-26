@@ -1,11 +1,18 @@
 import Link from "next/link";
 import { requireUser } from "@/server/dal";
 
-/** Profile. Addresses, payment methods, password, returns etc. are added in later steps. */
+const SECTIONS = [
+  { href: "/orders", title: "Your orders", body: "Track orders and filter by status" },
+  { href: "/account/returns", title: "Returns", body: "Return requests and their status" },
+  { href: "/account/addresses", title: "Addresses", body: "Shipping addresses and your default" },
+  { href: "/account/payments", title: "Payment methods", body: "Saved cards and your default" },
+  { href: "/account/security", title: "Password & security", body: "Change your password" },
+];
+
 export default async function AccountPage() {
   const user = await requireUser("/account");
   return (
-    <div className="max-w-xl space-y-4">
+    <div className="space-y-4">
       <h1 className="text-2xl font-semibold">Your account</h1>
       <section className="rounded bg-white p-4 shadow-sm">
         <h2 className="mb-2 font-medium">Profile</h2>
@@ -16,9 +23,14 @@ export default async function AccountPage() {
           <dd>{user.email}</dd>
         </dl>
       </section>
-      <Link href="/orders" className="inline-block text-sm text-blue-700 hover:underline">
-        Your orders
-      </Link>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {SECTIONS.map((s) => (
+          <Link key={s.href} href={s.href} className="rounded bg-white p-4 shadow-sm hover:shadow">
+            <p className="font-medium">{s.title}</p>
+            <p className="text-sm text-gray-600">{s.body}</p>
+          </Link>
+        ))}
+      </div>
     </div>
   );
 }

@@ -5,7 +5,7 @@ import { db, withTransaction, type Tx } from "@/db/client";
 import { cartItems, orderItems, orders, products } from "@/db/schema";
 import { buildOrderDraft, canPay, CheckoutError, subtotalOf } from "@/domain/checkout";
 import type { PaymentMethod } from "@/domain/payment";
-import type { Address, Order } from "@/domain/types";
+import type { Address, Order, OrderStatus } from "@/domain/types";
 import { getAddress } from "./addressService";
 import { recordRedemption, reserveCoupon, type CouponReservation } from "./couponService";
 import { ConflictError, NotFoundError } from "./errors";
@@ -30,6 +30,7 @@ function toOrder(row: OrderRow, items: ItemRow[]): Order {
     status: row.status,
     placedAt: row.createdAt.toISOString(),
     paidAt: row.paidAt?.toISOString() ?? null,
+    deliveredAt: row.deliveredAt?.toISOString() ?? null,
     subtotalCents: row.subtotalCents,
     discountCents: row.discountCents,
     totalCents: row.totalCents,
@@ -68,8 +69,12 @@ export async function getOrder(userId: string, orderId: string): Promise<Order> 
   return toOrder(row, await loadItems([row.id]));
 }
 
-export async function listOrders(userId: string): Promise<Order[]> {
-  const rows = await db.select().from(orders).where(eq(orders.userId, userId)).orderBy(desc(orders.createdAt));
+export async function listOrders(userId: string, status?: OrderStatus): Promise<Order[]> {
+  const rows = await db
+    .select()
+    .from(orders)
+    .where(status ? and(eq(orders.userId, userId), eq(orders.status, status)) : eq(orders.userId, userId))
+    .orderBy(desc(orders.createdAt));
   const items = await loadItems(rows.map((r) => r.id));
   return rows.map((r) => toOrder(r, items.filter((i) => i.orderId === r.id)));
 }

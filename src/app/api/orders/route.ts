@@ -1,10 +1,17 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
+import { parseOrderStatus } from "@/domain/checkout";
+import { BadRequestError } from "@/server/errors";
 import { parseBody, withUser } from "@/server/http";
 import { createOrder, listOrders } from "@/server/orderService";
 
-export function GET() {
-  return withUser(async (user) => NextResponse.json(await listOrders(user.id)));
+/** The caller's orders, optionally filtered by ?status= (validated against the real statuses). */
+export function GET(request: NextRequest) {
+  return withUser(async (user) => {
+    const status = parseOrderStatus(request.nextUrl.searchParams.get("status"));
+    if (status === null) throw new BadRequestError("Unknown order status.");
+    return NextResponse.json(await listOrders(user.id, status));
+  });
 }
 
 // The body only *names* things: which saved address, which saved card, which coupon.
