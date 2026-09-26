@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { boolean, check, index, integer, pgEnum, pgTable, primaryKey, real, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
+import { boolean, check, customType, index, integer, pgEnum, pgTable, primaryKey, real, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 
 // ---------------------------------------------------------------------------
 // Auth. `users` and `accounts` follow the Auth.js Drizzle adapter shape; the extra
@@ -92,6 +92,8 @@ export const products = pgTable(
     stock: integer("stock").notNull().default(0),
     thumbnail: text("thumbnail").notNull(),
     images: text("images").array().notNull().default([]),
+    /** Number of customer reviews; `rating` becomes their average once there is at least one. */
+    reviewCount: integer("review_count").notNull().default(0),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
@@ -338,4 +340,93 @@ export const returnItems = pgTable(
     quantity: integer("quantity").notNull(),
   },
   (t) => [primaryKey({ columns: [t.returnId, t.productId] }), check("return_items_quantity_positive", sql`${t.quantity} > 0`)],
+);
+
+// ---------------------------------------------------------------------------
+// Uploads (images stored in Postgres; served by /api/images/:id)
+// ---------------------------------------------------------------------------
+
+const bytea = customType<{ data: Buffer; driverData: Buffer }>({ dataType: () => "bytea" });
+
+export const uploadPurposeEnum = pgEnum("upload_purpose", ["review", "product"]);
+
+export const uploads = pgTable(
+  "uploads",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    ownerId: text("owner_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    purpose: uploadPurposeEnum("purpose").notNull(),
+    /** Detected from the bytes on upload, never taken from the client. */
+    contentType: text("content_type").notNull(),
+    sizeBytes: integer("size_bytes").notNull(),
+    data: bytea("data").notNull(),
+    createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("uploads_owner_idx").on(t.ownerId),
+    check("uploads_content_type", sql`${t.contentType} IN ('image/jpeg', 'image/png', 'image/webp')`),
+    check("uploads_size", sql`${t.sizeBytes} > 0 AND ${t.sizeBytes} <= 2097152`),
+  ],
+);
+
+// ---------------------------------------------------------------------------
+// Reviews
+// ---------------------------------------------------------------------------
+
+export const reviews = pgTable(
+  "reviews",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    productId: text("product_id")
+      .notNull()
+      .references(() => products.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    rating: integer("rating").notNull(),
+    title: text("title").notNull().default(""),
+    body: text("body").notNull(),
+    createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    // One review per user per product: resubmitting updates this row.
+    uniqueIndex("reviews_product_user_idx").on(t.productId, t.userId),
+    index("reviews_product_idx").on(t.productId, t.createdAt),
+    check("reviews_rating_range", sql`${t.rating} BETWEEN 1 AND 5`),
+  ],
+);
+
+export const reviewImages = pgTable(
+  "review_images",
+  {
+    reviewId: text("review_id")
+      .notNull()
+      .references(() => reviews.id, { onDelete: "cascade" }),
+    uploadId: text("upload_id")
+      .notNull()
+      .references(() => uploads.id, { onDelete: "cascade" }),
+    position: integer("position").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.reviewId, t.uploadId] }), uniqueIndex("review_images_upload_idx").on(t.uploadId)],
+);
+
+export const reviewVotes = pgTable(
+  "review_votes",
+  {
+    reviewId: text("review_id")
+      .notNull()
+      .references(() => reviews.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.reviewId, t.userId] })],
 );

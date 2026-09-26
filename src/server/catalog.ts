@@ -16,6 +16,7 @@ function toProduct(row: ProductRow): Product {
     brand: row.brand ?? undefined,
     priceCents: row.priceCents,
     rating: row.rating,
+    reviewCount: row.reviewCount,
     stock: row.stock,
     thumbnail: row.thumbnail,
     images: row.images,

@@ -13,6 +13,7 @@ export type Product = {
   /** Prices are integer cents to avoid floating-point rounding in totals. */
   priceCents: number;
   rating: number;
+  reviewCount: number;
   stock: number;
   thumbnail: string;
   images: string[];

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ProductImage } from "@/components/ProductImage";
 import { useState } from "react";
+import { Stars } from "@/components/Stars";
 import { EmptyView, ErrorView, Spinner } from "@/components/StatusViews";
 import { NotFoundError } from "@/data/http";
 import { maxQuantityFor } from "@/domain/cart";
@@ -11,6 +12,7 @@ import type { Product } from "@/domain/types";
 import { useCartStore } from "@/state/cartStore";
 import { useProduct } from "@/state/catalogQueries";
 import { useIsSaved, useWishlistStore } from "@/state/wishlistStore";
+import { Reviews } from "./Reviews";
 
 export function ProductDetail({ id }: { id: string }) {
   const { state, retry } = useProduct(id);
@@ -22,7 +24,12 @@ export function ProductDetail({ id }: { id: string }) {
     }
     return <ErrorView message={state.error.message} onRetry={retry} />;
   }
-  return <ProductView product={state.data} />;
+  return (
+    <div className="space-y-6">
+      <ProductView product={state.data} />
+      <Reviews productId={state.data.id} />
+    </div>
+  );
 }
 
 function ProductView({ product }: { product: Product }) {
@@ -54,7 +61,11 @@ function ProductView({ product }: { product: Product }) {
       <div className="flex flex-col gap-3">
         <h1 className="text-2xl font-semibold">{product.title}</h1>
         {product.brand && <p className="text-sm text-gray-600">Brand: {product.brand}</p>}
-        <p className="text-sm text-gray-600">★ {product.rating.toFixed(1)}</p>
+        <a href="#reviews-heading" className="flex items-center gap-2 text-sm text-gray-600 hover:text-amber-700">
+          <Stars rating={product.rating} size="text-sm" />
+          {product.rating.toFixed(1)}
+          {product.reviewCount > 0 && <span>({product.reviewCount} {product.reviewCount === 1 ? "review" : "reviews"})</span>}
+        </a>
         <p className="text-3xl font-semibold">{formatPrice(product.priceCents)}</p>
         <p className="text-gray-700">{product.description}</p>
         <AddToCart product={product} />

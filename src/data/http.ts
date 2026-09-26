@@ -44,7 +44,14 @@ export function getJson<T>(url: string, signal?: AbortSignal): Promise<T> {
   return request<T>(url, { signal });
 }
 
-export function sendJson<T>(method: "POST" | "PATCH" | "DELETE", url: string, body?: unknown): Promise<T> {
+/** Multipart upload of a single file (the browser sets the boundary header). */
+export function uploadFile<T>(url: string, file: File): Promise<T> {
+  const form = new FormData();
+  form.append("file", file);
+  return request<T>(url, { method: "POST", body: form });
+}
+
+export function sendJson<T>(method: "POST" | "PUT" | "PATCH" | "DELETE", url: string, body?: unknown): Promise<T> {
   return request<T>(url, {
     method,
     headers: body === undefined ? undefined : { "Content-Type": "application/json" },
