@@ -87,12 +87,14 @@ function ProductView({ product }: { product: Product }) {
             </Link>
           )}
           <a href="#reviews-heading" className="flex items-center gap-2 text-sm hover:text-[#c7511f]">
-            <span>{product.rating.toFixed(1)}</span>
+            {product.reviewCount > 0 && <span>{product.rating.toFixed(1)}</span>}
             <Stars rating={product.rating} size="text-base" />
-            {product.reviewCount > 0 && (
+            {product.reviewCount > 0 ? (
               <span className="text-link">
                 {product.reviewCount} {product.reviewCount === 1 ? "rating" : "ratings"}
               </span>
+            ) : (
+              <span className="text-gray-600">No ratings yet</span>
             )}
           </a>
           <hr />

@@ -61,7 +61,7 @@ export async function listFeatured(limit = 12): Promise<Product[]> {
     .select()
     .from(products)
     .where(and(gt(products.stock, 0), eq(products.archived, false)))
-    .orderBy(desc(products.rating), asc(products.id))
+    .orderBy(desc(products.rating), desc(products.reviewCount), asc(products.id))
     .limit(limit);
   return rows.map(toProduct);
 }

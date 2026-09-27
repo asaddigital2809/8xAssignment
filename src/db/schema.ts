@@ -92,7 +92,7 @@ export const products = pgTable(
     stock: integer("stock").notNull().default(0),
     thumbnail: text("thumbnail").notNull(),
     images: text("images").array().notNull().default([]),
-    /** Number of customer reviews; `rating` becomes their average once there is at least one. */
+    /** Number of customer reviews; `rating` is their average, or 0 when there are none. */
     reviewCount: integer("review_count").notNull().default(0),
     /** Archived products stay for order history but are hidden and can't be bought. */
     archived: boolean("archived").notNull().default(false),

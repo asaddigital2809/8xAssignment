@@ -224,7 +224,8 @@ async function main() {
       .onConflictDoUpdate({ target: categories.id, set: { name: sql`excluded.name`, image: sql`excluded.image` } });
     await tx
       .insert(products)
-      .values(catalog.products.map((p) => ({ ...p, brand: "brand" in p ? p.brand : null })))
+      // Ratings come only from customer reviews (recomputed in step 6), never from the source catalog.
+      .values(catalog.products.map((p) => ({ ...p, brand: "brand" in p ? p.brand : null, rating: 0 })))
       .onConflictDoUpdate({
         target: products.id,
         set: {
@@ -233,7 +234,7 @@ async function main() {
           categoryId: sql`excluded.category_id`,
           brand: sql`excluded.brand`,
           priceCents: sql`excluded.price_cents`,
-          rating: sql`excluded.rating`,
+          rating: 0,
           stock: sql`excluded.stock`,
           thumbnail: sql`excluded.thumbnail`,
           images: sql`excluded.images`,
