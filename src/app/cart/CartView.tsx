@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { ProductImage } from "@/components/ProductImage";
-import { EmptyView, ErrorView, Spinner } from "@/components/StatusViews";
+import { ErrorView, Spinner } from "@/components/StatusViews";
 import { formatPrice } from "@/domain/money";
 import type { CartItem } from "@/domain/types";
 import { useCart, useCartCount, useCartStatus, useCartStore } from "@/state/cartStore";
+import { EmptyCart } from "./EmptyCart";
 
 export function CartView() {
   const status = useCartStatus();
@@ -18,7 +19,7 @@ export function CartView() {
     return <ErrorView message={loadError ?? "Couldn't load your cart."} onRetry={() => void useCartStore.getState().load()} />;
   }
   if (cart.items.length === 0) {
-    return <EmptyView title="Your cart is empty" action={{ href: "/", label: "Continue shopping" }} />;
+    return <EmptyCart />;
   }
 
   return (
