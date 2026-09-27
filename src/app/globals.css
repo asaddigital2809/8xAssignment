@@ -132,3 +132,21 @@
     animation-delay: 0s !important;
   }
 }
+
+/* Cart badge: pops in whenever the count changes (the span is keyed by the count). */
+.cart-badge {
+  animation: cart-pop 350ms cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+@keyframes cart-pop {
+  from {
+    transform: scale(0.4);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cart-badge {
+    animation: none;
+  }
+}

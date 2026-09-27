@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, ViewTransition } from "react";
 import { CARD_IMAGE_SIZES } from "@/components/ProductCard";
+import { flyToCart } from "@/components/flyToCart";
 import { ChevronRight, HeartIcon, ShieldIcon, TruckIcon } from "@/components/icons";
 import { Price } from "@/components/Price";
 import { ProductImage } from "@/components/ProductImage";
@@ -152,7 +153,7 @@ function HeroImage({ product, src }: { product: Product; src: string }) {
       style={{ background: `radial-gradient(circle at 50% 45%, ${palette?.tint ?? "#f1f5f9"} 0%, ${palette?.soft ?? "#f8fafc"} 55%, #fff 100%)` }}
     >
       <ViewTransition name={heroName(product.id)} share="morph" default="none">
-        <div className="relative aspect-square">
+        <div className="relative aspect-square" data-product-hero>
           {!loaded && (
             <ProductImage src={product.thumbnail} alt="" aria-hidden fill sizes={CARD_IMAGE_SIZES} className="object-contain p-3" />
           )}
@@ -214,6 +215,7 @@ function AddToCart({ product }: { product: Product }) {
   const busy = useCartStore((s) => s.busy === product.id);
   const error = useCartStore((s) => s.mutationError);
   const inCart = useCartStore((s) => s.cart?.items.find((i) => i.productId === product.id)?.quantity ?? 0);
+  const signedIn = useCartStore((s) => s.status === "ready");
   const max = maxQuantityFor(product);
   const [quantity, setQuantity] = useState(1);
 
@@ -236,7 +238,11 @@ function AddToCart({ product }: { product: Product }) {
       </label>
       {/* Signed-out users get a 401 from the API and are sent to sign-in, then back here. */}
       <button
-        onClick={() => add(product.id, quantity)}
+        onClick={() => {
+          // Signed-out users are redirected to sign-in instead, so only fly for a real cart.
+          if (signedIn) flyToCart(document.querySelector<HTMLImageElement>("[data-product-hero] img:last-of-type"));
+          void add(product.id, quantity);
+        }}
         disabled={busy}
         className="w-full rounded-full bg-cta py-2 text-sm font-medium shadow-sm hover:bg-cta-dark disabled:opacity-60"
       >

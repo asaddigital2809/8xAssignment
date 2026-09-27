@@ -93,10 +93,16 @@ function CartLink() {
   // The count is the link's only <span> (tests and the signed-out state rely on that).
   return (
     <Link href="/cart" aria-label={`Cart${status === "ready" ? `, ${count} items` : ""}`} className="flex items-end gap-1 rounded px-2 py-1 hover:ring-1 hover:ring-white">
-      <div className="relative">
+      <div className="relative" data-cart-target>
         <CartIcon width={34} height={34} />
         {status !== "signed-out" && (
-          <span className="absolute top-[3px] left-[19px] -translate-x-1/2 text-sm leading-none font-bold text-brand">{status === "ready" ? count : "·"}</span>
+          // Keyed by count so the badge pops each time it changes.
+          <span
+            key={status === "ready" ? count : "loading"}
+            className="cart-badge absolute -top-1.5 -right-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-brand px-1 text-xs leading-none font-bold text-navy shadow ring-2 ring-navy"
+          >
+            {status === "ready" ? count : "·"}
+          </span>
         )}
       </div>
       <b className="hidden pb-0.5 text-sm sm:block">Cart</b>
