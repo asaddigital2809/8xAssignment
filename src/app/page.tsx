@@ -6,9 +6,11 @@ import { ReturnIcon, ShieldIcon, TruckIcon } from "@/components/icons";
 import { ProductRail } from "@/components/ProductCard";
 import { ProductImage } from "@/components/ProductImage";
 import { EmptyView, ErrorView, Spinner } from "@/components/StatusViews";
-import type { AsyncState } from "@/state/useAsync";
-import type { Product } from "@/domain/types";
+import { TiltCard } from "@/components/TiltCard";
+import type { Category, Product } from "@/domain/types";
 import { useCategories, useFeaturedProducts, useProductSearch } from "@/state/catalogQueries";
+import { useImageAccent } from "@/state/imageAccent";
+import type { AsyncState } from "@/state/useAsync";
 
 // Rails by department, in display order (ids from the seeded catalog).
 const DEPARTMENT_RAILS = [
@@ -64,18 +66,40 @@ function CategoryTiles() {
       <h2 id="shop-by-category" className="sr-only">
         Shop by category
       </h2>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
         {state.data.map((c) => (
-          <Link key={c.id} href={`/search?category=${c.id}`} className="group flex flex-col rounded-md bg-white p-4 shadow-sm ring-1 ring-black/5 hover:shadow-md">
-            <p className="font-bold">{c.name}</p>
-            <div className="relative my-3 aspect-[4/3]">
-              <ProductImage src={c.image} alt="" fill sizes="220px" className="object-contain transition group-hover:scale-105" />
-            </div>
-            <span className="mt-auto text-sm text-link group-hover:text-[#c7511f] group-hover:underline">Shop now</span>
-          </Link>
+          <CategoryTile key={c.id} category={c} />
         ))}
       </div>
     </section>
+  );
+}
+
+/** Category card tinted with its image's color; the product floats up on hover. */
+function CategoryTile({ category: c }: { category: Category }) {
+  const palette = useImageAccent(c.image);
+  return (
+    <TiltCard palette={palette} maxTilt={5} className="h-full">
+      <Link href={`/search?category=${c.id}`} className="flex h-full flex-col overflow-hidden rounded-xl outline-offset-4">
+        <div
+          className="relative aspect-[4/3] transition-[background] duration-500"
+          style={{ background: "linear-gradient(160deg, var(--accent-tint) 0%, var(--accent-soft) 60%, #fff 100%)" }}
+        >
+          <div className="tile-image absolute inset-4">
+            <ProductImage src={c.image} alt="" fill sizes="240px" className="object-contain" />
+          </div>
+        </div>
+        <div className="flex items-center justify-between gap-2 px-4 py-3">
+          <p className="font-bold">{c.name}</p>
+          <span
+            aria-hidden
+            className="text-lg font-bold text-[var(--accent)] transition-transform duration-300 group-hover:translate-x-1"
+          >
+            →
+          </span>
+        </div>
+      </Link>
+    </TiltCard>
   );
 }
 
@@ -113,16 +137,16 @@ function Rail({ title, href, query }: { title: string; href: string; query: { st
   const { state, retry } = query;
   return (
     <Panel>
-      <div className="mb-3 flex items-baseline gap-3">
+      <div className="mb-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <h2 className="text-xl font-bold">{title}</h2>
-        <Link href={href} className="text-sm text-link hover:text-[#c7511f] hover:underline">
+        <Link href={href} className="text-sm whitespace-nowrap text-link hover:text-[#c7511f] hover:underline">
           See more
         </Link>
       </div>
       {state.status === "loading" && <Spinner label="Loading products…" />}
       {state.status === "error" && <ErrorView message={state.error.message} onRetry={retry} />}
       {state.status === "success" && state.data.length === 0 && <p className="text-sm text-gray-600">Nothing here right now.</p>}
-      {state.status === "success" && state.data.length > 0 && <ProductRail products={state.data} />}
+      {state.status === "success" && state.data.length > 0 && <ProductRail products={state.data} listKey={href} />}
     </Panel>
   );
 }

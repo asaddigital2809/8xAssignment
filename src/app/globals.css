@@ -23,3 +23,112 @@
     border-color: var(--color-gray-200);
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Interactive cards (TiltCard): tilt toward the pointer, lift, colored shadow.
+   Colors come from each image's accent (--accent*) set inline by the component.
+   --------------------------------------------------------------------------- */
+@property --rx {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+@property --ry {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+.tilt-card {
+  transform: perspective(900px) rotateX(var(--rx)) rotateY(var(--ry)) translateY(0);
+  transition:
+    --rx 250ms ease-out,
+    --ry 250ms ease-out,
+    transform 300ms ease-out,
+    box-shadow 300ms ease-out;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.06);
+}
+.tilt-card:hover {
+  transform: perspective(900px) rotateX(var(--rx)) rotateY(var(--ry)) translateY(-6px);
+  box-shadow:
+    0 22px 40px -18px var(--accent-glow),
+    0 2px 6px rgb(0 0 0 / 0.06);
+}
+.tilt-card:focus-within {
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+/* The product floats up out of its well on hover. */
+.tilt-card .card-image,
+.tilt-card .tile-image {
+  transition:
+    transform 400ms cubic-bezier(0.2, 0, 0, 1),
+    filter 400ms ease-out;
+}
+.tilt-card:hover .card-image,
+.tilt-card:hover .tile-image {
+  transform: translateY(-6px) scale(1.07);
+  filter: drop-shadow(0 14px 12px var(--accent-glow));
+}
+
+.tilt-shine {
+  background: radial-gradient(circle at var(--mx, 50%) var(--my, 0%), rgb(255 255 255 / 0.45), transparent 45%);
+  mix-blend-mode: soft-light;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tilt-card,
+  .tilt-card:hover,
+  .tilt-card .card-image,
+  .tilt-card .tile-image,
+  .tilt-card:hover .card-image,
+  .tilt-card:hover .tile-image {
+    transform: none;
+    transition: box-shadow 200ms ease-out;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Shared-element "hero" transition (React <ViewTransition share="morph">): the opened
+   card's image flies into the product page's main image, like Flutter's Hero widget.
+   --------------------------------------------------------------------------- */
+::view-transition {
+  pointer-events: none; /* clicks during the animation reach the live page */
+}
+::view-transition-group(.morph) {
+  animation-duration: 450ms;
+  animation-timing-function: cubic-bezier(0.2, 0, 0, 1); /* Material "emphasized" ~ Flutter fastOutSlowIn */
+  z-index: 50;
+}
+::view-transition-image-pair(.morph) {
+  isolation: auto;
+}
+/* Keep the card's picture fully visible in flight (like a Hero), and fade the destination
+   in over it near the end, so an image that's still loading never shows as a blank box. */
+::view-transition-old(.morph) {
+  animation: none;
+  mix-blend-mode: normal;
+  opacity: 1;
+}
+::view-transition-new(.morph) {
+  mix-blend-mode: normal;
+  animation: hero-in 450ms cubic-bezier(0.2, 0, 0, 1) both;
+}
+@keyframes hero-in {
+  0%,
+  55% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+  }
+}

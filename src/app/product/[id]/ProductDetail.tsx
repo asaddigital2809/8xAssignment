@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, ViewTransition } from "react";
+import { CARD_IMAGE_SIZES } from "@/components/ProductCard";
 import { ChevronRight, HeartIcon, ShieldIcon, TruckIcon } from "@/components/icons";
 import { Price } from "@/components/Price";
 import { ProductImage } from "@/components/ProductImage";
@@ -13,6 +14,8 @@ import { estimatedDelivery } from "@/domain/money";
 import type { Product } from "@/domain/types";
 import { useCartStore } from "@/state/cartStore";
 import { useCategories, useProduct } from "@/state/catalogQueries";
+import { heroName } from "@/state/heroTransition";
+import { useImageAccent } from "@/state/imageAccent";
 import { useIsSaved, useWishlistStore } from "@/state/wishlistStore";
 import { Reviews } from "./Reviews";
 
@@ -73,9 +76,7 @@ function ProductView({ product }: { product: Product }) {
               ))}
             </div>
           )}
-          <div className="relative aspect-square flex-1">
-            <ProductImage src={activeImage} alt={product.title} fill priority sizes="(max-width: 1024px) 100vw, 40vw" className="object-contain" />
-          </div>
+          <HeroImage product={product} src={activeImage} />
         </div>
 
         <div className="space-y-3">
@@ -128,6 +129,42 @@ function ProductView({ product }: { product: Product }) {
           </dl>
         </aside>
       </div>
+    </div>
+  );
+}
+
+/**
+ * The main image, and the landing spot of the card's shared-element ("hero") transition:
+ * the same ViewTransition name as the opened card, so the browser morphs one into the
+ * other. Underneath sits the card's thumbnail (same `sizes`, so the same cached URL) until
+ * the large image has loaded, so the page never shows an empty box mid-transition.
+ */
+function HeroImage({ product, src }: { product: Product; src: string }) {
+  const palette = useImageAccent(product.thumbnail);
+  const [loadedSrc, setLoadedSrc] = useState<string | null>(null);
+  const loaded = loadedSrc === src;
+
+  return (
+    <div
+      className="relative flex-1 overflow-hidden rounded-xl transition-[background] duration-500"
+      style={{ background: `radial-gradient(circle at 50% 45%, ${palette?.tint ?? "#f1f5f9"} 0%, ${palette?.soft ?? "#f8fafc"} 55%, #fff 100%)` }}
+    >
+      <ViewTransition name={heroName(product.id)} share="morph" default="none">
+        <div className="relative aspect-square">
+          {!loaded && (
+            <ProductImage src={product.thumbnail} alt="" aria-hidden fill sizes={CARD_IMAGE_SIZES} className="object-contain p-3" />
+          )}
+          <ProductImage
+            src={src}
+            alt={product.title}
+            fill
+            priority
+            sizes="(max-width: 1024px) 100vw, 40vw"
+            onLoad={() => setLoadedSrc(src)}
+            className={`object-contain p-3 transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`}
+          />
+        </div>
+      </ViewTransition>
     </div>
   );
 }
