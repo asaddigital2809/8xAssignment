@@ -83,7 +83,7 @@ function StepPanel({ flow, step, summary, children }: { flow: Flow; step: Checko
       <div className="flex items-center justify-between gap-2">
         <h2 className={`font-semibold ${open ? "" : "text-gray-500"}`}>{STEP_LABEL[step]}</h2>
         {done && (
-          <button onClick={() => flow.goTo(step)} className="text-sm text-blue-700 hover:underline">
+          <button onClick={() => flow.goTo(step)} className="text-sm text-link hover:underline">
             Change
           </button>
         )}
@@ -121,7 +121,7 @@ function AddressStep({ flow }: { flow: Flow }) {
       {showForm ? (
         <NewAddressForm flow={flow} onDone={() => setAdding(false)} canCancel={state.data.length > 0} />
       ) : (
-        <button onClick={() => setAdding(true)} className="text-sm text-blue-700 hover:underline">
+        <button onClick={() => setAdding(true)} className="text-sm text-link hover:underline">
           + Add a new address
         </button>
       )}
@@ -157,11 +157,11 @@ function NewAddressForm({ flow, onDone, canCancel }: { flow: Flow; onDone: () =>
       <AddressFields address={form.address} errors={form.errors} onChange={form.setField} />
       {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
       <div className="flex gap-3">
-        <button disabled={saving} className="rounded-full bg-amber-400 px-5 py-2 text-sm font-medium hover:bg-amber-500 disabled:opacity-60">
+        <button disabled={saving} className="rounded-full bg-cta px-5 py-2 text-sm font-medium hover:bg-cta-dark disabled:opacity-60">
           {saving ? "Saving…" : "Save address"}
         </button>
         {canCancel && (
-          <button type="button" onClick={onDone} className="text-sm text-blue-700 hover:underline">
+          <button type="button" onClick={onDone} className="text-sm text-link hover:underline">
             Cancel
           </button>
         )}
@@ -197,7 +197,7 @@ function PaymentStep({ flow }: { flow: Flow }) {
       {showForm ? (
         <NewCardForm flow={flow} onDone={() => setAdding(false)} canCancel={state.data.length > 0} />
       ) : (
-        <button onClick={() => setAdding(true)} className="text-sm text-blue-700 hover:underline">
+        <button onClick={() => setAdding(true)} className="text-sm text-link hover:underline">
           + Add a card
         </button>
       )}
@@ -234,11 +234,11 @@ function NewCardForm({ flow, onDone, canCancel }: { flow: Flow; onDone: () => vo
       <CardFields fields={form.fields} errors={form.errors} brand={form.brand} onChange={form.setField} />
       {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
       <div className="flex gap-3">
-        <button disabled={saving} className="rounded-full bg-amber-400 px-5 py-2 text-sm font-medium hover:bg-amber-500 disabled:opacity-60">
+        <button disabled={saving} className="rounded-full bg-cta px-5 py-2 text-sm font-medium hover:bg-cta-dark disabled:opacity-60">
           {saving ? "Saving…" : "Save card"}
         </button>
         {canCancel && (
-          <button type="button" onClick={onDone} className="text-sm text-blue-700 hover:underline">
+          <button type="button" onClick={onDone} className="text-sm text-link hover:underline">
             Cancel
           </button>
         )}
@@ -273,7 +273,7 @@ function ReviewStep({ flow, onPlace }: { flow: Flow; onPlace: () => void }) {
               Coupon <strong>{flow.appliedCoupon}</strong> applied
               {state.status === "success" && state.data?.coupon && <span className="text-gray-600"> · {state.data.coupon.description}</span>}
             </span>
-            <button onClick={flow.removeCoupon} className="text-blue-700 hover:underline">
+            <button onClick={flow.removeCoupon} className="text-link hover:underline">
               Remove
             </button>
           </p>
@@ -339,7 +339,7 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
 
 function ContinueButton({ disabled, onClick, children }: { disabled?: boolean; onClick: () => void; children: ReactNode }) {
   return (
-    <button onClick={onClick} disabled={disabled} className="rounded-full bg-amber-400 px-6 py-2 font-medium hover:bg-amber-500 disabled:opacity-50">
+    <button onClick={onClick} disabled={disabled} className="rounded-full bg-cta px-6 py-2 font-medium hover:bg-cta-dark disabled:opacity-50">
       {children}
     </button>
   );

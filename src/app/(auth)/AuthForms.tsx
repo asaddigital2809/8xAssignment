@@ -32,7 +32,7 @@ export function SignInForm({ callbackUrl, testMode = false }: { callbackUrl: str
         <FormError message={state.error} />
       )}
       {state.error === "unverified" && (
-        <Link href={`/verify-email?email=${encodeURIComponent(state.email ?? "")}`} className="block text-sm text-blue-700 hover:underline">
+        <Link href={`/verify-email?email=${encodeURIComponent(state.email ?? "")}`} className="block text-sm text-link hover:underline">
           {testMode ? "Enter your activation code" : "Resend activation email"}
         </Link>
       )}
@@ -74,7 +74,7 @@ export function ActivateForm({ token }: { token: string }) {
       <input type="hidden" name="token" value={token} />
       <FormError message={state.error} />
       {state.error ? (
-        <Link href="/verify-email" className="block text-sm text-blue-700 hover:underline">
+        <Link href="/verify-email" className="block text-sm text-link hover:underline">
           Send a new activation link
         </Link>
       ) : (
@@ -157,7 +157,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
       <input type="hidden" name="token" value={token} />
       <FormError message={state.error} />
       {state.error && (
-        <Link href="/forgot-password" className="block text-sm text-blue-700 hover:underline">
+        <Link href="/forgot-password" className="block text-sm text-link hover:underline">
           Request a new reset link
         </Link>
       )}

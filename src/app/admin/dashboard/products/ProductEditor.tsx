@@ -67,7 +67,7 @@ function ProductForm({ initial, onUpdated }: { initial?: AdminProductRow; onUpda
 
   return (
     <form onSubmit={onSubmit} noValidate className="max-w-3xl space-y-4">
-      <Link href="/admin/dashboard/products" className="text-sm text-blue-700 hover:underline">
+      <Link href="/admin/dashboard/products" className="text-sm text-link hover:underline">
         ← All products
       </Link>
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -77,7 +77,7 @@ function ProductForm({ initial, onUpdated }: { initial?: AdminProductRow; onUpda
             {initial.archived ? (
               <span className="rounded bg-gray-200 px-2 py-0.5 text-gray-700">Archived</span>
             ) : (
-              <Link href={`/product/${initial.id}`} className="text-blue-700 hover:underline" target="_blank">
+              <Link href={`/product/${initial.id}`} className="text-link hover:underline" target="_blank">
                 View in store ↗
               </Link>
             )}
@@ -133,7 +133,7 @@ function ProductForm({ initial, onUpdated }: { initial?: AdminProductRow; onUpda
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
-        <button disabled={form.saving || form.images.uploading} className="rounded-full bg-amber-400 px-6 py-2 font-medium hover:bg-amber-500 disabled:opacity-60">
+        <button disabled={form.saving || form.images.uploading} className="rounded-full bg-cta px-6 py-2 font-medium hover:bg-cta-dark disabled:opacity-60">
           {form.saving ? "Saving…" : initial ? "Save changes" : "Create product"}
         </button>
         {initial && !initial.archived && (

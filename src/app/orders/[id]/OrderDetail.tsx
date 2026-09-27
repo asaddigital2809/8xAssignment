@@ -30,10 +30,10 @@ export function OrderDetail({ id, justPlaced }: { id: string; justPlaced: boolea
       <OrderSummary order={state.data} showAddress />
       {state.data.status === "delivered" && <ReturnsSection order={state.data} />}
       <div className="flex gap-4 text-sm">
-        <Link href="/orders" className="text-blue-700 hover:underline">
+        <Link href="/orders" className="text-link hover:underline">
           View all orders
         </Link>
-        <Link href="/" className="text-blue-700 hover:underline">
+        <Link href="/" className="text-link hover:underline">
           Continue shopping
         </Link>
       </div>
@@ -57,11 +57,11 @@ function ReturnsSection({ order }: { order: Order }) {
       </div>
       <div className="flex gap-3">
         {eligible && (
-          <Link href={`/orders/${order.id}/return`} className="rounded-full bg-amber-400 px-4 py-1.5 font-medium hover:bg-amber-500">
+          <Link href={`/orders/${order.id}/return`} className="rounded-full bg-cta px-4 py-1.5 font-medium hover:bg-cta-dark">
             Return items
           </Link>
         )}
-        <Link href="/account/returns" className="self-center text-blue-700 hover:underline">
+        <Link href="/account/returns" className="self-center text-link hover:underline">
           Your returns
         </Link>
       </div>

@@ -28,7 +28,7 @@ export default async function SignInPage({ searchParams }: PageProps<"/signin">)
         {params.reset && <Notice>Your password was changed. Sign in with the new one.</Notice>}
         {oauthError && <FormError message={OAUTH_ERRORS[oauthError] ?? "Sign-in failed. Please try again."} />}
         <SignInForm callbackUrl={callbackUrl} testMode={devOtpEnabled()} />
-        <Link href="/forgot-password" className="block text-sm text-blue-700 hover:underline">
+        <Link href="/forgot-password" className="block text-sm text-link hover:underline">
           Forgot your password?
         </Link>
         {githubEnabled && (
@@ -39,7 +39,7 @@ export default async function SignInPage({ searchParams }: PageProps<"/signin">)
         )}
         <p className="border-t pt-3 text-sm">
           New here?{" "}
-          <Link href="/register" className="text-blue-700 hover:underline">
+          <Link href="/register" className="text-link hover:underline">
             Create an account
           </Link>
         </p>

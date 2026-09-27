@@ -48,7 +48,7 @@ export function OrderAdmin({ id }: { id: string }) {
 
   return (
     <div className="space-y-4">
-      <Link href="/admin/dashboard/orders" className="text-sm text-blue-700 hover:underline">
+      <Link href="/admin/dashboard/orders" className="text-sm text-link hover:underline">
         ← All orders
       </Link>
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -65,7 +65,7 @@ export function OrderAdmin({ id }: { id: string }) {
                 if (to === "cancelled" && !window.confirm("Cancel this order? Paid items go back into stock.")) return;
                 void run(() => repo.setOrderStatus(order.id, to));
               }}
-              className={`rounded-full px-4 py-1.5 text-sm font-medium disabled:opacity-50 ${to === "cancelled" ? "border border-red-300 text-red-700 hover:bg-red-50" : "bg-amber-400 hover:bg-amber-500"}`}
+              className={`rounded-full px-4 py-1.5 text-sm font-medium disabled:opacity-50 ${to === "cancelled" ? "border border-red-300 text-red-700 hover:bg-red-50" : "bg-cta hover:bg-cta-dark"}`}
             >
               {ACTION_LABEL[to] ?? ORDER_STATUS_LABEL[to]}
             </button>

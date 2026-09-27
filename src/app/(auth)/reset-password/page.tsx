@@ -23,7 +23,7 @@ export default async function ResetPasswordPage({ searchParams }: PageProps<"/re
       {typeof token === "string" && token ? (
         <ResetPasswordForm token={token} />
       ) : (
-        <Link href="/forgot-password" className="text-blue-700 hover:underline">
+        <Link href="/forgot-password" className="text-link hover:underline">
           This link is incomplete. Request a new reset link.
         </Link>
       )}

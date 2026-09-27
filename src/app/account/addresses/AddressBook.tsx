@@ -26,7 +26,7 @@ export function AddressBook() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Your addresses</h1>
         {editing !== "new" && state.status === "success" && (
-          <button onClick={() => setEditing("new")} className="rounded-full bg-amber-400 px-4 py-1.5 text-sm font-medium hover:bg-amber-500">
+          <button onClick={() => setEditing("new")} className="rounded-full bg-cta px-4 py-1.5 text-sm font-medium hover:bg-cta-dark">
             Add address
           </button>
         )}
@@ -91,14 +91,14 @@ function AddressCard(props: { address: SavedAddress; busy: boolean; onEdit: () =
       {a.isDefault && <p className="mb-1 text-xs font-medium text-amber-700">Default</p>}
       <p className="text-sm">{formatAddress(a)}</p>
       <div className="mt-3 flex gap-3 text-sm">
-        <button onClick={props.onEdit} disabled={busy} className="text-blue-700 hover:underline disabled:opacity-50">
+        <button onClick={props.onEdit} disabled={busy} className="text-link hover:underline disabled:opacity-50">
           Edit
         </button>
-        <button onClick={props.onDelete} disabled={busy} className="text-blue-700 hover:underline disabled:opacity-50">
+        <button onClick={props.onDelete} disabled={busy} className="text-link hover:underline disabled:opacity-50">
           Remove
         </button>
         {!a.isDefault && (
-          <button onClick={props.onMakeDefault} disabled={busy} className="text-blue-700 hover:underline disabled:opacity-50">
+          <button onClick={props.onMakeDefault} disabled={busy} className="text-link hover:underline disabled:opacity-50">
             Set as default
           </button>
         )}
@@ -141,10 +141,10 @@ function AddressEditor(props: {
       )}
       {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
       <div className="flex gap-3">
-        <button disabled={saving} className="rounded-full bg-amber-400 px-5 py-2 text-sm font-medium hover:bg-amber-500 disabled:opacity-60">
+        <button disabled={saving} className="rounded-full bg-cta px-5 py-2 text-sm font-medium hover:bg-cta-dark disabled:opacity-60">
           {saving ? "Saving…" : "Save"}
         </button>
-        <button type="button" onClick={props.onCancel} className="text-sm text-blue-700 hover:underline">
+        <button type="button" onClick={props.onCancel} className="text-sm text-link hover:underline">
           Cancel
         </button>
       </div>

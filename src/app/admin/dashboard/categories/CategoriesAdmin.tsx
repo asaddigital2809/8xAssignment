@@ -26,7 +26,7 @@ export function CategoriesAdmin() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Categories</h1>
         {editing !== "new" && (
-          <button onClick={() => setEditing("new")} className="rounded-full bg-amber-400 px-4 py-1.5 text-sm font-medium hover:bg-amber-500">
+          <button onClick={() => setEditing("new")} className="rounded-full bg-cta px-4 py-1.5 text-sm font-medium hover:bg-cta-dark">
             New category
           </button>
         )}
@@ -69,7 +69,7 @@ export function CategoriesAdmin() {
                   </p>
                 </div>
                 <div className="flex gap-3 text-sm">
-                  <button onClick={() => setEditing(c.id)} className="text-blue-700 hover:underline">
+                  <button onClick={() => setEditing(c.id)} className="text-link hover:underline">
                     Edit
                   </button>
                   <button
@@ -109,10 +109,10 @@ function CategoryForm({ initial, onDone }: { initial?: AdminCategoryRow; onDone:
       <ImageUploader uploads={form.images} max={1} label="Tile image" />
       {form.error && <p role="alert" className="text-sm text-red-700">{form.error}</p>}
       <div className="flex gap-3">
-        <button disabled={form.saving || form.images.uploading} className="rounded-full bg-amber-400 px-5 py-2 text-sm font-medium hover:bg-amber-500 disabled:opacity-60">
+        <button disabled={form.saving || form.images.uploading} className="rounded-full bg-cta px-5 py-2 text-sm font-medium hover:bg-cta-dark disabled:opacity-60">
           {form.saving ? "Saving…" : "Save"}
         </button>
-        <button type="button" onClick={() => onDone(false)} className="text-sm text-blue-700 hover:underline">
+        <button type="button" onClick={() => onDone(false)} className="text-sm text-link hover:underline">
           Cancel
         </button>
       </div>

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { Suspense } from "react";
 import { AccountNav } from "@/components/AccountNav";
+import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import "./globals.css";
 
@@ -12,18 +13,24 @@ const geistSans = Geist({
 
 export const metadata: Metadata = {
   title: "amzn.clone",
-  description: "A 24-hour Amazon clone take-home",
+  description: "An Amazon-style demo store",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${geistSans.variable} h-full antialiased`}>
-      <body className="flex min-h-full flex-col bg-gray-100 text-gray-900">
+      <body id="top" className="flex min-h-full flex-col bg-page text-gray-900">
+        <a href="#main" className="sr-only z-50 bg-white p-2 focus:not-sr-only focus:absolute focus:top-2 focus:left-2">
+          Skip to content
+        </a>
         {/* Header reads search params, which requires a Suspense boundary. */}
-        <Suspense fallback={<div className="h-14 bg-slate-900" />}>
+        <Suspense fallback={<div className="h-[104px] bg-navy" />}>
           <Header account={<AccountNav />} />
         </Suspense>
-        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6">{children}</main>
+        <main id="main" className="mx-auto w-full max-w-7xl flex-1 px-3 py-5 sm:px-4">
+          {children}
+        </main>
+        <Footer />
       </body>
     </html>
   );

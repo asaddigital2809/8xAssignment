@@ -17,7 +17,7 @@ export function OrderSummary({ order, showAddress = false, linkBase = "/orders" 
         <span>Placed {formatOrderDate(order.placedAt)}</span>
         <span>Total {formatPrice(order.totalCents)}</span>
         <OrderStatusBadge status={order.status} />
-        <Link href={`${linkBase}/${order.id}`} className="text-blue-700 hover:underline">
+        <Link href={`${linkBase}/${order.id}`} className="text-link hover:underline">
           Order # {order.id}
         </Link>
       </header>

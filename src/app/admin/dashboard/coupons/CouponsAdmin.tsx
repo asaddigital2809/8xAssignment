@@ -32,7 +32,7 @@ export function CouponsAdmin() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Coupons</h1>
         {editing !== "new" && (
-          <button onClick={() => setEditing("new")} className="rounded-full bg-amber-400 px-4 py-1.5 text-sm font-medium hover:bg-amber-500">
+          <button onClick={() => setEditing("new")} className="rounded-full bg-cta px-4 py-1.5 text-sm font-medium hover:bg-cta-dark">
             New coupon
           </button>
         )}
@@ -67,7 +67,7 @@ export function CouponsAdmin() {
                   </p>
                 </div>
                 <div className="flex gap-3">
-                  <button onClick={() => setEditing(c.id)} className="text-blue-700 hover:underline">
+                  <button onClick={() => setEditing(c.id)} className="text-link hover:underline">
                     Edit
                   </button>
                   <button
@@ -152,10 +152,10 @@ function CouponForm({ initial, onDone }: { initial?: AdminCoupon; onDone: (saved
       </div>
       {form.error && <p role="alert" className="text-sm text-red-700">{form.error}</p>}
       <div className="flex gap-3">
-        <button disabled={form.saving} className="rounded-full bg-amber-400 px-5 py-2 text-sm font-medium hover:bg-amber-500 disabled:opacity-60">
+        <button disabled={form.saving} className="rounded-full bg-cta px-5 py-2 text-sm font-medium hover:bg-cta-dark disabled:opacity-60">
           {form.saving ? "Saving…" : "Save coupon"}
         </button>
-        <button type="button" onClick={() => onDone(false)} className="text-sm text-blue-700 hover:underline">
+        <button type="button" onClick={() => onDone(false)} className="text-sm text-link hover:underline">
           Cancel
         </button>
       </div>

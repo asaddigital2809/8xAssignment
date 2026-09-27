@@ -2,6 +2,17 @@
 
 @theme inline {
   --font-sans: var(--font-geist-sans);
+
+  /* Storefront palette (Amazon-like): dark header, warm accent, yellow call-to-action. */
+  --color-navy: #131921;
+  --color-navy-light: #232f3e;
+  --color-brand: #febd69;
+  --color-brand-dark: #f3a847;
+  --color-cta: #ffd814;
+  --color-cta-dark: #f7ca00;
+  --color-page: #eaeded;
+  --color-link: #007185;
+  --color-deal: #cc0c39;
 }
 
 /* Tailwind v4 borders default to currentColor; use a neutral divider color instead. */

@@ -30,7 +30,7 @@ export function EmptyView({ title, children, action }: { title: string; children
       <p className="text-lg font-medium">{title}</p>
       {children && <div className="mt-1 text-sm text-gray-600">{children}</div>}
       {action && (
-        <Link href={action.href} className="mt-4 inline-block rounded-full bg-amber-400 px-5 py-2 text-sm font-medium hover:bg-amber-500">
+        <Link href={action.href} className="mt-4 inline-block rounded-full bg-cta px-5 py-2 text-sm font-medium hover:bg-cta-dark">
           {action.label}
         </Link>
       )}

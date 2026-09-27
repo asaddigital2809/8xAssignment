@@ -38,7 +38,7 @@ export function ReturnRequestForm({ orderId }: { orderId: string }) {
       <h1 className="text-2xl font-semibold">Return items</h1>
       <p className="text-sm text-gray-600">
         Order{" "}
-        <Link href={`/orders/${orderId}`} className="text-blue-700 hover:underline">
+        <Link href={`/orders/${orderId}`} className="text-link hover:underline">
           # {orderId}
         </Link>
         . Choose what you&apos;re sending back. Your refund is calculated from what you paid.
@@ -115,7 +115,7 @@ export function ReturnRequestForm({ orderId }: { orderId: string }) {
           {form.error}
         </p>
       )}
-      <button disabled={form.submitting} className="rounded-full bg-amber-400 px-6 py-2 font-medium hover:bg-amber-500 disabled:opacity-60">
+      <button disabled={form.submitting} className="rounded-full bg-cta px-6 py-2 font-medium hover:bg-cta-dark disabled:opacity-60">
         {form.submitting ? "Submitting…" : "Request return"}
       </button>
     </form>

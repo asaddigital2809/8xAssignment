@@ -27,7 +27,7 @@ export function PaymentMethods() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Payment methods</h1>
         {!adding && state.status === "success" && (
-          <button onClick={() => setAdding(true)} className="rounded-full bg-amber-400 px-4 py-1.5 text-sm font-medium hover:bg-amber-500">
+          <button onClick={() => setAdding(true)} className="rounded-full bg-cta px-4 py-1.5 text-sm font-medium hover:bg-cta-dark">
             Add a card
           </button>
         )}
@@ -52,11 +52,11 @@ export function PaymentMethods() {
               </div>
               <div className="flex gap-3 text-sm">
                 {!c.isDefault && (
-                  <button onClick={() => run(c.id, () => cards.setDefault(c.id))} disabled={busy === c.id} className="text-blue-700 hover:underline disabled:opacity-50">
+                  <button onClick={() => run(c.id, () => cards.setDefault(c.id))} disabled={busy === c.id} className="text-link hover:underline disabled:opacity-50">
                     Set as default
                   </button>
                 )}
-                <button onClick={() => run(c.id, () => cards.remove(c.id))} disabled={busy === c.id} className="text-blue-700 hover:underline disabled:opacity-50">
+                <button onClick={() => run(c.id, () => cards.remove(c.id))} disabled={busy === c.id} className="text-link hover:underline disabled:opacity-50">
                   Remove
                 </button>
               </div>
@@ -96,10 +96,10 @@ function NewCard({ onDone, create }: { onDone: () => void; create: ReturnType<ty
       </label>
       {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
       <div className="flex gap-3">
-        <button disabled={saving} className="rounded-full bg-amber-400 px-5 py-2 text-sm font-medium hover:bg-amber-500 disabled:opacity-60">
+        <button disabled={saving} className="rounded-full bg-cta px-5 py-2 text-sm font-medium hover:bg-cta-dark disabled:opacity-60">
           {saving ? "Saving…" : "Save card"}
         </button>
-        <button type="button" onClick={onDone} className="text-sm text-blue-700 hover:underline">
+        <button type="button" onClick={onDone} className="text-sm text-link hover:underline">
           Cancel
         </button>
       </div>

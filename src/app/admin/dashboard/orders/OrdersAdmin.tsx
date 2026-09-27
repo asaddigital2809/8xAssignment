@@ -69,7 +69,7 @@ export function OrdersAdmin({ status, q }: { status?: OrderStatus; q: string }) 
               {state.data.map((o) => (
                 <tr key={o.id} className="hover:bg-gray-50">
                   <td className="px-3 py-2">
-                    <Link href={`/admin/dashboard/orders/${o.id}`} className="text-blue-700 hover:underline">
+                    <Link href={`/admin/dashboard/orders/${o.id}`} className="text-link hover:underline">
                       {o.id}
                     </Link>
                   </td>

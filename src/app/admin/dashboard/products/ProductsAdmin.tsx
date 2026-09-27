@@ -27,7 +27,7 @@ export function ProductsAdmin({ q }: { q: string }) {
             <input name="q" defaultValue={q} placeholder="Title, brand or id" aria-label="Search products" className="rounded-l border border-gray-300 px-3 py-1.5 text-sm" />
             <button className="rounded-r bg-slate-900 px-3 text-sm text-white">Search</button>
           </form>
-          <Link href="/admin/dashboard/products/new" className="rounded-full bg-amber-400 px-4 py-1.5 text-sm font-medium hover:bg-amber-500">
+          <Link href="/admin/dashboard/products/new" className="rounded-full bg-cta px-4 py-1.5 text-sm font-medium hover:bg-cta-dark">
             New product
           </Link>
         </div>
@@ -56,7 +56,7 @@ export function ProductsAdmin({ q }: { q: string }) {
                       <span className="relative h-10 w-10 shrink-0 bg-gray-50">
                         <ProductImage src={p.thumbnail} alt="" fill sizes="40px" className="object-contain" />
                       </span>
-                      <span className="text-blue-700 hover:underline">{p.title}</span>
+                      <span className="text-link hover:underline">{p.title}</span>
                     </Link>
                   </td>
                   <td className="px-3 py-2">{p.categoryId}</td>

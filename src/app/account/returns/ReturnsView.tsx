@@ -44,7 +44,7 @@ function ReturnCard({ r }: { r: ReturnRequestView }) {
     <article className="rounded bg-white shadow-sm">
       <header className="flex flex-wrap items-center justify-between gap-2 rounded-t bg-gray-50 px-4 py-2 text-sm text-gray-600">
         <span>Requested {formatOrderDate(r.createdAt)}</span>
-        <Link href={`/orders/${r.orderId}`} className="text-blue-700 hover:underline">
+        <Link href={`/orders/${r.orderId}`} className="text-link hover:underline">
           Order # {r.orderId}
         </Link>
         <span>Return # {r.id}</span>

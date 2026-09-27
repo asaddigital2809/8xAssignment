@@ -40,7 +40,7 @@ export function SubmitButton({ children, pendingLabel }: { children: ReactNode; 
     <button
       type="submit"
       disabled={pending}
-      className="w-full rounded-full bg-amber-400 py-2 font-medium hover:bg-amber-500 disabled:opacity-60"
+      className="w-full rounded-full bg-cta py-2 font-medium hover:bg-cta-dark disabled:opacity-60"
     >
       {pending ? pendingLabel : children}
     </button>
@@ -62,9 +62,14 @@ export function Notice({ children }: { children: ReactNode }) {
 
 export function AuthCard({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <div className="mx-auto mt-6 max-w-sm rounded bg-white p-6 shadow-sm">
-      <h1 className="mb-4 text-2xl font-semibold">{title}</h1>
-      {children}
+    <div className="mx-auto mt-2 max-w-sm">
+      <p className="mb-4 text-center text-3xl font-bold tracking-tight">
+        amzn<span className="text-[#e77600]">.clone</span>
+      </p>
+      <div className="rounded-lg border border-gray-300 bg-white p-6">
+        <h1 className="mb-4 text-3xl font-normal">{title}</h1>
+        {children}
+      </div>
     </div>
   );
 }

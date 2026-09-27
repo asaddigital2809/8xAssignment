@@ -59,11 +59,11 @@ function WishlistRow({ item }: { item: WishlistItem }) {
         <button
           onClick={() => moveToCart(item.productId)}
           disabled={busy || !item.inStock}
-          className="rounded-full bg-amber-400 px-4 py-1.5 text-sm font-medium hover:bg-amber-500 disabled:opacity-50"
+          className="rounded-full bg-cta px-4 py-1.5 text-sm font-medium hover:bg-cta-dark disabled:opacity-50"
         >
           Move to cart
         </button>
-        <button onClick={() => remove(item.productId)} disabled={busy} className="text-sm text-blue-700 hover:underline disabled:opacity-50">
+        <button onClick={() => remove(item.productId)} disabled={busy} className="text-sm text-link hover:underline disabled:opacity-50">
           Remove
         </button>
       </div>

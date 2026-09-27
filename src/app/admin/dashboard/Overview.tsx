@@ -44,7 +44,7 @@ export function Overview() {
             <ul className="divide-y text-sm">
               {o.recentOrders.map((r) => (
                 <li key={r.id} className="flex items-center justify-between gap-2 py-2">
-                  <Link href={`/admin/dashboard/orders/${r.id}`} className="text-blue-700 hover:underline">
+                  <Link href={`/admin/dashboard/orders/${r.id}`} className="text-link hover:underline">
                     {r.id}
                   </Link>
                   <span className="truncate text-gray-600">{r.customer.email}</span>
@@ -63,7 +63,7 @@ export function Overview() {
             <ul className="divide-y text-sm">
               {o.lowStock.map((p) => (
                 <li key={p.id} className="flex justify-between py-2">
-                  <Link href={`/admin/dashboard/products/${p.id}`} className="text-blue-700 hover:underline">
+                  <Link href={`/admin/dashboard/products/${p.id}`} className="text-link hover:underline">
                     {p.title}
                   </Link>
                   <span className={p.stock === 0 ? "font-medium text-red-700" : "text-amber-700"}>{p.stock} left</span>
