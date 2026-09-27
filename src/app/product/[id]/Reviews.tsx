@@ -26,8 +26,9 @@ export function Reviews({ productId }: { productId: string }) {
         {state.status === "success" && <Summary summary={state.data.summary} />}
         <WriteReviewCta
           signedIn={signedIn}
-          hasReview={mine.state.status === "success" && mine.state.data !== null}
+          mine={mine.state.status === "success" ? (mine.state.data ? "has-review" : "no-review") : mine.state.status}
           onWrite={() => setEditing(true)}
+          onRetry={mine.retry}
           productId={productId}
         />
       </div>
@@ -38,9 +39,11 @@ export function Reviews({ productId }: { productId: string }) {
             productId={productId}
             initial={mine.state.data}
             onCancel={() => setEditing(false)}
-            onSaved={() => {
+            onSaved={(saved) => {
               setEditing(false);
-              mine.retry();
+              // The save response is the saved review: use it rather than refetching,
+              // so a failed follow-up request can't hide the user's own review.
+              mine.replace(saved);
               retry();
             }}
           />
@@ -90,7 +93,7 @@ function Summary({ summary }: { summary: RatingSummary }) {
             <li key={star} className="flex items-center gap-2">
               <span className="w-10">{star} star</span>
               <span className="h-3 flex-1 overflow-hidden rounded bg-gray-100" aria-hidden>
-                <span className="block h-full bg-amber-400" style={{ width: `${pct}%` }} />
+                <span className="block h-full bg-cta" style={{ width: `${pct}%` }} />
               </span>
               <span className="w-9 text-right text-gray-600">{pct}%</span>
             </li>
@@ -101,17 +104,38 @@ function Summary({ summary }: { summary: RatingSummary }) {
   );
 }
 
-function WriteReviewCta(props: { signedIn: boolean | undefined; hasReview: boolean; onWrite: () => void; productId: string }) {
+type MineState = "loading" | "error" | "has-review" | "no-review";
+
+function WriteReviewCta(props: { signedIn: boolean | undefined; mine: MineState; onWrite: () => void; onRetry: () => void; productId: string }) {
   if (props.signedIn === undefined) return null;
+  if (props.signedIn && props.mine === "loading") {
+    return (
+      <div className="border-t pt-4">
+        <Spinner label="Checking your review…" />
+      </div>
+    );
+  }
+  if (props.signedIn && props.mine === "error") {
+    // Without this, the button would say "Write a review" but have no form to open.
+    return (
+      <div role="alert" className="border-t pt-4 text-sm">
+        <p className="text-red-700">Couldn&apos;t load your review.</p>
+        <button onClick={props.onRetry} className="mt-1 text-link hover:underline">
+          Try again
+        </button>
+      </div>
+    );
+  }
+  const hasReview = props.signedIn && props.mine === "has-review";
   return (
     <div className="border-t pt-4">
-      <p className="font-medium">{props.hasReview ? "You reviewed this product" : "Review this product"}</p>
-      <p className="mb-2 text-sm text-gray-600">{props.hasReview ? "You can update your review at any time." : "Share your thoughts with other customers."}</p>
+      <p className="font-medium">{hasReview ? "You reviewed this product" : "Review this product"}</p>
+      <p className="mb-2 text-sm text-gray-600">{hasReview ? "You can update your review at any time." : "Share your thoughts with other customers."}</p>
       <button
         onClick={() => (props.signedIn ? props.onWrite() : redirectToSignIn(`/product/${props.productId}`))}
         className="w-full rounded-full border border-gray-300 py-1.5 text-sm font-medium hover:bg-gray-50"
       >
-        {props.hasReview ? "Edit your review" : props.signedIn ? "Write a review" : "Sign in to write a review"}
+        {hasReview ? "Edit your review" : props.signedIn ? "Write a review" : "Sign in to write a review"}
       </button>
     </div>
   );
@@ -169,12 +193,13 @@ function ReviewItem({ review: r, signedIn, onHelpful }: { review: ReviewView; si
   );
 }
 
-function ReviewForm(props: { productId: string; initial: MyReview | null; onCancel: () => void; onSaved: () => void }) {
+function ReviewForm(props: { productId: string; initial: MyReview | null; onCancel: () => void; onSaved: (saved: MyReview) => void }) {
   const form = useReviewForm(props.productId, props.initial);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    if (await form.submit()) props.onSaved();
+    const saved = await form.submit();
+    if (saved) props.onSaved(saved);
   }
 
   return (
@@ -256,10 +281,10 @@ function ReviewForm(props: { productId: string; initial: MyReview | null; onCanc
       </div>
       {form.error && <p role="alert" className="text-sm text-red-700">{form.error}</p>}
       <div className="flex gap-3">
-        <button disabled={form.saving || form.uploading} className="rounded-full bg-amber-400 px-5 py-2 text-sm font-medium hover:bg-amber-500 disabled:opacity-60">
+        <button disabled={form.saving || form.uploading} className="rounded-full bg-cta px-5 py-2 text-sm font-medium hover:bg-cta-dark disabled:opacity-60">
           {form.saving ? "Submitting…" : "Submit review"}
         </button>
-        <button type="button" onClick={props.onCancel} className="text-sm text-blue-700 hover:underline">
+        <button type="button" onClick={props.onCancel} className="text-sm text-link hover:underline">
           Cancel
         </button>
       </div>
