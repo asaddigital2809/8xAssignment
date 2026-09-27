@@ -29,9 +29,6 @@ const COLUMNS = [
 export function Footer() {
   return (
     <footer className="mt-10 text-sm text-white">
-      <a href="#top" className="block bg-navy-light py-3.5 text-center hover:bg-[#37475a]">
-        Back to top
-      </a>
       <div className="bg-[#232f3e]">
         <div className="mx-auto grid max-w-5xl gap-8 px-6 py-10 sm:grid-cols-3">
           {COLUMNS.map((c) => (
