@@ -21,7 +21,7 @@ const DEPARTMENT_RAILS = [
 
 export default function HomePage() {
   return (
-    <div className="-mt-5 space-y-5">
+    <div className="home-full -mt-5 space-y-5">
       <Hero />
       <div className="relative z-10 -mt-24 sm:-mt-40">
         <CategoryTiles />
@@ -37,8 +37,8 @@ export default function HomePage() {
 
 function Hero() {
   return (
-    <section className="-mx-3 bg-gradient-to-b from-[#37475a] via-[#5b7a8c] to-page px-6 pt-10 pb-32 text-white sm:-mx-4 sm:pb-48">
-      <div className="mx-auto max-w-7xl">
+    <section className="-mx-3 bg-gradient-to-b from-[#37475a] via-[#5b7a8c] to-page px-6 pt-10 pb-32 text-white sm:-mx-4 sm:pb-48 lg:-mx-6">
+      <div>
         <p className="text-sm font-medium tracking-wide text-brand uppercase">This week only</p>
         <h1 className="mt-1 max-w-xl text-3xl font-bold sm:text-4xl">New season tech, delivered free</h1>
         <p className="mt-2 max-w-lg text-white/90">Phones, laptops and accessories from top brands. Free delivery on every order and 30-day returns.</p>
@@ -82,7 +82,7 @@ function CategoryTile({ category: c }: { category: Category }) {
     <TiltCard palette={palette} maxTilt={5} className="h-full">
       <Link href={`/search?category=${c.id}`} className="flex h-full flex-col overflow-hidden rounded-xl outline-offset-4">
         <div
-          className="relative aspect-[4/3] transition-[background] duration-500"
+          className="relative aspect-[4/3] transition-[background] duration-500 xl:aspect-[16/10]"
           style={{ background: "linear-gradient(160deg, var(--accent-tint) 0%, var(--accent-soft) 60%, #fff 100%)" }}
         >
           <div className="tile-image absolute inset-4">

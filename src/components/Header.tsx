@@ -13,7 +13,7 @@ export function Header({ account }: { account: ReactNode }) {
   return (
     <header>
       <div className="bg-navy text-white">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2 md:flex-nowrap">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2 md:flex-nowrap lg:px-6">
           <Link href="/" className="rounded px-1 py-1 text-2xl font-bold tracking-tight outline-offset-2 hover:ring-1 hover:ring-white">
             amzn<span className="text-brand">.clone</span>
           </Link>
@@ -111,7 +111,7 @@ function CategoryBar() {
   const active = params.get("category");
   return (
     <nav aria-label="Departments" className="bg-navy-light text-sm text-white">
-      <div className="mx-auto flex max-w-7xl gap-1 overflow-x-auto px-2 py-1.5 whitespace-nowrap">
+      <div className="flex gap-1 overflow-x-auto px-2 py-1.5 whitespace-nowrap lg:px-5">
         <Link href="/search" className="rounded px-2 py-0.5 font-bold hover:ring-1 hover:ring-white">
           All
         </Link>

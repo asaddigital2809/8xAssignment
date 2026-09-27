@@ -86,7 +86,7 @@ export function ProductRail({ products, listKey = "rail" }: { products: Product[
     // Padding gives the lifted cards and their colored shadows room inside the scroller.
     <div className="-mx-2 flex snap-x gap-4 overflow-x-auto px-2 pt-2 pb-5">
       {products.map((p) => (
-        <div key={p.id} className="w-44 shrink-0 snap-start sm:w-52">
+        <div key={p.id} className="max-w-64 shrink-0 grow basis-44 snap-start sm:basis-52">
           <ProductCard product={p} compact listKey={listKey} />
         </div>
       ))}

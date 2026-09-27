@@ -27,7 +27,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <Suspense fallback={<div className="h-[104px] bg-navy" />}>
           <Header account={<AccountNav />} />
         </Suspense>
-        <main id="main" className="mx-auto w-full max-w-7xl flex-1 px-3 py-5 sm:px-4">
+        <main id="main" className="mx-auto w-full max-w-7xl flex-1 px-3 py-5 sm:px-4 has-[>.home-full]:max-w-none lg:has-[>.home-full]:px-6">
           {children}
         </main>
         <Footer />
